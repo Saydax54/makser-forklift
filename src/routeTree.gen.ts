@@ -16,6 +16,7 @@ import { Route as AuthenticatedGorevlerimRouteImport } from './routes/_authentic
 import { Route as AuthenticatedMusterilerRouteImport } from './routes/_authenticated/musteriler'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as AuthenticatedTeknisyenlerRouteImport } from './routes/_authenticated/teknisyenler'
+import { Route as AuthenticatedIsIdRouteImport } from './routes/_authenticated/is.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,11 @@ const AuthenticatedTeknisyenlerRoute =
     path: '/teknisyenler',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedIsIdRoute = AuthenticatedIsIdRouteImport.update({
+  id: '/is/$id',
+  path: '/is/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/musteriler': typeof AuthenticatedMusterilerRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
+  '/is/$id': typeof AuthenticatedIsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/musteriler': typeof AuthenticatedMusterilerRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
+  '/is/$id': typeof AuthenticatedIsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,14 +86,27 @@ export interface FileRoutesById {
   '/_authenticated/musteriler': typeof AuthenticatedMusterilerRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
+  '/_authenticated/is/$id': typeof AuthenticatedIsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/giris' | '/gorevlerim' | '/musteriler' | '/panel' | '/teknisyenler'
+    | '/'
+    | '/giris'
+    | '/gorevlerim'
+    | '/musteriler'
+    | '/panel'
+    | '/teknisyenler'
+    | '/is/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/giris' | '/gorevlerim' | '/musteriler' | '/panel' | '/teknisyenler'
+    | '/'
+    | '/giris'
+    | '/gorevlerim'
+    | '/musteriler'
+    | '/panel'
+    | '/teknisyenler'
+    | '/is/$id'
   id:
     | '__root__'
     | '/'
@@ -95,6 +116,7 @@ export interface FileRouteTypes {
     | '/_authenticated/musteriler'
     | '/_authenticated/panel'
     | '/_authenticated/teknisyenler'
+    | '/_authenticated/is/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -154,6 +176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeknisyenlerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/is/$id': {
+      id: '/_authenticated/is/$id'
+      path: '/is/$id'
+      fullPath: '/is/$id'
+      preLoaderRoute: typeof AuthenticatedIsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -162,6 +191,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMusterilerRoute: typeof AuthenticatedMusterilerRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
   AuthenticatedTeknisyenlerRoute: typeof AuthenticatedTeknisyenlerRoute
+  AuthenticatedIsIdRoute: typeof AuthenticatedIsIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -169,6 +199,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMusterilerRoute: AuthenticatedMusterilerRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
   AuthenticatedTeknisyenlerRoute: AuthenticatedTeknisyenlerRoute,
+  AuthenticatedIsIdRoute: AuthenticatedIsIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
