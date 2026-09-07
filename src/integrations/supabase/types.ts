@@ -14,16 +14,180 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          address: string
+          created_at: string
+          email: string
+          forklift_brand: string
+          forklift_model: string
+          id: string
+          name: string
+          phone: string
+          serial_no: string
+        }
+        Insert: {
+          address?: string
+          created_at?: string
+          email?: string
+          forklift_brand?: string
+          forklift_model?: string
+          id?: string
+          name: string
+          phone?: string
+          serial_no?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          email?: string
+          forklift_brand?: string
+          forklift_model?: string
+          id?: string
+          name?: string
+          phone?: string
+          serial_no?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string
+          id: string
+          phone?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      technicians: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          phone: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          phone?: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      work_orders: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          fault_description: string
+          id: string
+          service_note: string
+          signature_data: string | null
+          started_at: string | null
+          status: string
+          technician_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          fault_description: string
+          id?: string
+          service_note?: string
+          signature_data?: string | null
+          started_at?: string | null
+          status?: string
+          technician_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          fault_description?: string
+          id?: string
+          service_note?: string
+          signature_data?: string | null
+          started_at?: string | null
+          status?: string
+          technician_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "technician"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +314,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "technician"],
+    },
   },
 } as const
