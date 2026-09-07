@@ -98,14 +98,23 @@ function OrderDetail() {
       .update({ status: "in_progress", started_at: new Date().toISOString() })
       .eq("id", id);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("İş başlatıldı");
     void qc.invalidateQueries();
   }
 
   async function complete() {
-    if (!note.trim()) return toast.error("Servis notu yazın");
-    if (!signature && !o?.signature_data) return toast.error("Müşteri imzası gerekli");
+    if (!note.trim()) {
+      toast.error("Servis notu yazın");
+      return;
+    }
+    if (!signature && !o?.signature_data) {
+      toast.error("Müşteri imzası gerekli");
+      return;
+    }
     setBusy(true);
     try {
       const completedAt = new Date().toISOString();
@@ -114,7 +123,7 @@ function OrderDetail() {
         .update({
           status: "completed",
           service_note: note.trim(),
-          signature_data: signature ?? o?.signature_data,
+          signature_data: signature ?? o?.signature_data ?? null,
           completed_at: completedAt,
         })
         .eq("id", id);

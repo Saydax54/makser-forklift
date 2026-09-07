@@ -45,13 +45,19 @@ function TechniciansPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!fullName.trim()) return toast.error("Ad soyad gerekli");
+    if (!fullName.trim()) {
+      toast.error("Ad soyad gerekli");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase
       .from("technicians")
       .insert({ full_name: fullName.trim(), phone });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Teknisyen eklendi");
     setFullName("");
     setPhone("");
@@ -62,7 +68,10 @@ function TechniciansPage() {
   async function toggle(id: string, status: string) {
     const next = status === "available" ? "busy" : "available";
     const { error } = await supabase.from("technicians").update({ status: next }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     void qc.invalidateQueries({ queryKey: ["technicians"] });
   }
 

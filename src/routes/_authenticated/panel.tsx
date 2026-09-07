@@ -200,7 +200,10 @@ function NewOrderForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!fault.trim()) return toast.error("Arıza tanımı gerekli");
+    if (!fault.trim()) {
+      toast.error("Arıza tanımı gerekli");
+      return;
+    }
     setBusy(true);
     try {
       let cid = customerId;
