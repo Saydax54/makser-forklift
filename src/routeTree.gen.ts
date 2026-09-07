@@ -10,33 +10,97 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as GirisRouteImport } from './routes/giris'
+import { Route as AuthenticatedGorevlerimRouteImport } from './routes/_authenticated/gorevlerim'
+import { Route as AuthenticatedMusterilerRouteImport } from './routes/_authenticated/musteriler'
+import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
+import { Route as AuthenticatedTeknisyenlerRouteImport } from './routes/_authenticated/teknisyenler'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GirisRoute = GirisRouteImport.update({
+  id: '/giris',
+  path: '/giris',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedGorevlerimRoute = AuthenticatedGorevlerimRouteImport.update({
+  id: '/gorevlerim',
+  path: '/gorevlerim',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMusterilerRoute = AuthenticatedMusterilerRouteImport.update({
+  id: '/musteriler',
+  path: '/musteriler',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTeknisyenlerRoute =
+  AuthenticatedTeknisyenlerRouteImport.update({
+    id: '/teknisyenler',
+    path: '/teknisyenler',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/giris': typeof GirisRoute
+  '/gorevlerim': typeof AuthenticatedGorevlerimRoute
+  '/musteriler': typeof AuthenticatedMusterilerRoute
+  '/panel': typeof AuthenticatedPanelRoute
+  '/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/giris': typeof GirisRoute
+  '/gorevlerim': typeof AuthenticatedGorevlerimRoute
+  '/musteriler': typeof AuthenticatedMusterilerRoute
+  '/panel': typeof AuthenticatedPanelRoute
+  '/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/giris': typeof GirisRoute
+  '/_authenticated/gorevlerim': typeof AuthenticatedGorevlerimRoute
+  '/_authenticated/musteriler': typeof AuthenticatedMusterilerRoute
+  '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/giris' | '/gorevlerim' | '/musteriler' | '/panel' | '/teknisyenler'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/giris' | '/gorevlerim' | '/musteriler' | '/panel' | '/teknisyenler'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/giris'
+    | '/_authenticated/gorevlerim'
+    | '/_authenticated/musteriler'
+    | '/_authenticated/panel'
+    | '/_authenticated/teknisyenler'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  GirisRoute: typeof GirisRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +112,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/giris': {
+      id: '/giris'
+      path: '/giris'
+      fullPath: '/giris'
+      preLoaderRoute: typeof GirisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/gorevlerim': {
+      id: '/_authenticated/gorevlerim'
+      path: '/gorevlerim'
+      fullPath: '/gorevlerim'
+      preLoaderRoute: typeof AuthenticatedGorevlerimRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/musteriler': {
+      id: '/_authenticated/musteriler'
+      path: '/musteriler'
+      fullPath: '/musteriler'
+      preLoaderRoute: typeof AuthenticatedMusterilerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/panel': {
+      id: '/_authenticated/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof AuthenticatedPanelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/teknisyenler': {
+      id: '/_authenticated/teknisyenler'
+      path: '/teknisyenler'
+      fullPath: '/teknisyenler'
+      preLoaderRoute: typeof AuthenticatedTeknisyenlerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedGorevlerimRoute: typeof AuthenticatedGorevlerimRoute
+  AuthenticatedMusterilerRoute: typeof AuthenticatedMusterilerRoute
+  AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedTeknisyenlerRoute: typeof AuthenticatedTeknisyenlerRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedGorevlerimRoute: AuthenticatedGorevlerimRoute,
+  AuthenticatedMusterilerRoute: AuthenticatedMusterilerRoute,
+  AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedTeknisyenlerRoute: AuthenticatedTeknisyenlerRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  GirisRoute: GirisRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
