@@ -46,6 +46,7 @@ type OrderRow = {
   technician_id: string | null;
   service_items: unknown;
   customers: ServiceFormData["customer"] | null;
+  forklifts: { brand: string; model: string; serial_no: string } | null;
   technicians: { full_name: string } | null;
 };
 
