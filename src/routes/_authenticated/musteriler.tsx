@@ -28,6 +28,8 @@ export const Route = createFileRoute("/_authenticated/musteriler")({
 });
 
 const empty = {
+  company_name: "",
+  contact_person: "",
   name: "",
   phone: "",
   email: "",
