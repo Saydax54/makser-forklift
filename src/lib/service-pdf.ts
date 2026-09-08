@@ -56,7 +56,8 @@ function buildHtml(d: ServiceFormData) {
     </div>
 
     <div style="margin-top:22px;font-size:13px;font-weight:700;color:#f0a13c;text-transform:uppercase;letter-spacing:.06em">Müşteri Bilgileri</div>
-    ${row("Müşteri", d.customer.name)}
+    ${row("Firma Ünvanı", d.customer.company_name || d.customer.name)}
+    ${row("Yetkili Kişi", d.customer.contact_person || d.customer.name)}
     ${row("Telefon", d.customer.phone)}
     ${row("E-posta", d.customer.email)}
     ${row("Adres", d.customer.address)}
