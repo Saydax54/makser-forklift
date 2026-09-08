@@ -172,9 +172,24 @@ function CustomersPage() {
               <span>{c.phone || "Telefon yok"}</span>
               <span>{c.email || "E-posta yok"}</span>
               <span className="sm:col-span-2">{c.address}</span>
-              <span className="sm:col-span-2">
-                {[c.forklift_brand, c.forklift_model, c.serial_no].filter(Boolean).join(" · ")}
-              </span>
+            </div>
+            <div className="mt-2 space-y-1">
+              <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Forkliftler
+              </div>
+              {(forklifts.data ?? []).filter((f) => f.customer_id === c.id).length === 0 ? (
+                <p className="text-sm text-muted-foreground">Forklift kaydı yok</p>
+              ) : (
+                <ul className="text-sm">
+                  {(forklifts.data ?? [])
+                    .filter((f) => f.customer_id === c.id)
+                    .map((f) => (
+                      <li key={f.id}>
+                        {[f.brand, f.model, f.serial_no].filter(Boolean).join(" · ")}
+                      </li>
+                    ))}
+                </ul>
+              )}
             </div>
           </div>
         ))}
