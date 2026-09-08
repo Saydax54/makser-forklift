@@ -39,6 +39,7 @@ type OrderRow = {
   started_at: string | null;
   completed_at: string | null;
   technician_id: string | null;
+  service_items: unknown;
   customers: ServiceFormData["customer"] | null;
   technicians: { full_name: string } | null;
 };
@@ -48,6 +49,7 @@ function OrderDetail() {
   const { role } = useAuth();
   const qc = useQueryClient();
   const [note, setNote] = useState("");
+  const [items, setItems] = useState<ServiceItem[] | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -57,13 +59,14 @@ function OrderDetail() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, service_note, signature_data, created_at, started_at, completed_at, technician_id, customers(name, phone, email, address, forklift_brand, forklift_model, serial_no), technicians(full_name)",
+          "id, fault_description, status, service_note, service_items, signature_data, created_at, started_at, completed_at, technician_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), technicians(full_name)",
         )
         .eq("id", id)
         .single();
       if (error) throw error;
       const row = data as unknown as OrderRow;
       setNote((prev) => prev || row.service_note);
+      setItems((prev) => prev ?? parseServiceItems(row.service_items));
       return row;
     },
   });
