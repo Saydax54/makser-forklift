@@ -188,6 +188,7 @@ function OrderDetail() {
         </div>
 
         <dl className="mt-4 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
+          <Row label="Yetkili Kişi" value={formData.customer.contact_person ?? ""} />
           <Row label="Telefon" value={formData.customer.phone} href={`tel:${formData.customer.phone}`} />
           <Row label="E-posta" value={formData.customer.email} />
           <Row label="Adres" value={formData.customer.address} />
