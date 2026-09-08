@@ -116,8 +116,8 @@ function OrderDetail() {
   }
 
   async function complete() {
-    if (!note.trim()) {
-      toast.error("Servis notu yazın");
+    if (!(items ?? []).length && !note.trim()) {
+      toast.error("En az bir işlem maddesi ekleyin veya servis notu yazın");
       return;
     }
     if (!signature && !o?.signature_data) {
