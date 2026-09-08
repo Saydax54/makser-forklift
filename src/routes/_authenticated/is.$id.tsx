@@ -214,15 +214,19 @@ function OrderDetail() {
       {o.status === "in_progress" && canEdit && (
         <div className="space-y-4 rounded-xl border bg-card p-4 shadow-panel">
           <h2 className="font-display text-lg font-bold">Servis Formu</h2>
+          <div className="space-y-2">
+            <Label>Yapılan İşlemler / Değişen Parçalar</Label>
+            <ServiceItemsEditor items={items ?? []} onChange={setItems} />
+          </div>
           <div className="space-y-1.5">
-            <Label htmlFor="not">Yapılan İşlemler (Servis Notu)</Label>
+            <Label htmlFor="not">Teknisyen Görüşü / Ek Not</Label>
             <Textarea
               id="not"
-              rows={5}
+              rows={4}
               value={note}
               maxLength={2000}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Örn: Hidrolik hortum değişimi yapıldı, yağ seviyesi tamamlandı…"
+              placeholder="Örn: Fren balataları bir sonraki bakımda değişmeli, yağ kaçağı gözlenmedi…"
             />
           </div>
           <div className="space-y-1.5">
