@@ -132,6 +132,7 @@ function OrderDetail() {
         .update({
           status: "completed",
           service_note: note.trim(),
+          service_items: items ?? [],
           signature_data: signature ?? o?.signature_data ?? null,
           completed_at: completedAt,
         })
