@@ -12,6 +12,11 @@ import {
   type ServiceFormData,
 } from "@/lib/service-pdf";
 import { SignaturePad } from "@/components/SignaturePad";
+import {
+  ServiceItemsEditor,
+  parseServiceItems,
+  type ServiceItem,
+} from "@/components/ServiceItemsEditor";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
