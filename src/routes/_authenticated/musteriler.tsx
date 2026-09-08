@@ -78,7 +78,9 @@ function CustomersPage() {
   }
 
   const list = (customers.data ?? []).filter((c) =>
-    `${c.name} ${c.phone} ${c.serial_no}`.toLocaleLowerCase("tr").includes(search.toLocaleLowerCase("tr")),
+    `${c.company_name} ${c.name} ${c.contact_person} ${c.phone} ${c.serial_no}`
+      .toLocaleLowerCase("tr")
+      .includes(search.toLocaleLowerCase("tr")),
   );
 
   return (
