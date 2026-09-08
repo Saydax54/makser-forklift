@@ -57,12 +57,15 @@ function CustomersPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) {
-      toast.error("Müşteri adı gerekli");
+    const company = form.company_name.trim();
+    if (!company) {
+      toast.error("Firma ünvanı gerekli");
       return;
     }
     setBusy(true);
-    const { error } = await supabase.from("customers").insert({ ...form, name: form.name.trim() });
+    const { error } = await supabase
+      .from("customers")
+      .insert({ ...form, company_name: company, name: company });
     setBusy(false);
     if (error) {
       toast.error(error.message);
