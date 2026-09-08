@@ -55,6 +55,18 @@ function CustomersPage() {
     },
   });
 
+  const forklifts = useQuery({
+    queryKey: ["forklifts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("forklifts")
+        .select("id, customer_id, brand, model, serial_no")
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     const company = form.company_name.trim();
@@ -63,9 +75,19 @@ function CustomersPage() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("customers")
-      .insert({ ...form, company_name: company, name: company });
+      .insert({ ...form, company_name: company, name: company })
+      .select("id")
+      .single();
+    if (!error && data && (form.forklift_brand || form.forklift_model || form.serial_no)) {
+      await supabase.from("forklifts").insert({
+        customer_id: data.id,
+        brand: form.forklift_brand,
+        model: form.forklift_model,
+        serial_no: form.serial_no,
+      });
+    }
     setBusy(false);
     if (error) {
       toast.error(error.message);
@@ -75,6 +97,7 @@ function CustomersPage() {
     setForm(empty);
     setOpen(false);
     void qc.invalidateQueries({ queryKey: ["customers"] });
+    void qc.invalidateQueries({ queryKey: ["forklifts"] });
   }
 
   const list = (customers.data ?? []).filter((c) =>
