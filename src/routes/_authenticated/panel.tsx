@@ -212,10 +212,11 @@ function NewOrderForm({
     try {
       let cid = customerId;
       if (mode === "new") {
-        if (!form.name.trim()) throw new Error("Müşteri adı gerekli");
+        const company = form.company_name.trim();
+        if (!company) throw new Error("Firma ünvanı gerekli");
         const { data, error } = await supabase
           .from("customers")
-          .insert({ ...form, name: form.name.trim() })
+          .insert({ ...form, company_name: company, name: company })
           .select("id")
           .single();
         if (error) throw error;
