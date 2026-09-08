@@ -123,6 +123,18 @@ function Panel() {
     },
   });
 
+  const forklifts = useQuery({
+    queryKey: ["forklifts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("forklifts")
+        .select("id, customer_id, brand, model, serial_no")
+        .order("created_at");
+      if (error) throw error;
+      return (data ?? []) as Forklift[];
+    },
+  });
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
