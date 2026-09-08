@@ -152,10 +152,12 @@ function Panel() {
             <NewOrderForm
               customers={customers.data ?? []}
               technicians={technicians.data ?? []}
+              forklifts={forklifts.data ?? []}
               onDone={() => {
                 setOpen(false);
                 void qc.invalidateQueries({ queryKey: ["orders"] });
                 void qc.invalidateQueries({ queryKey: ["customers"] });
+                void qc.invalidateQueries({ queryKey: ["forklifts"] });
               }}
             />
           </DialogContent>
