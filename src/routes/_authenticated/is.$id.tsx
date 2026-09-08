@@ -242,7 +242,26 @@ function OrderDetail() {
       {o.status === "completed" && (
         <div className="space-y-4 rounded-xl border bg-card p-4 shadow-panel">
           <h2 className="font-display text-lg font-bold">Tamamlanan Servis</h2>
-          <p className="whitespace-pre-wrap text-sm">{o.service_note}</p>
+          {(formData.serviceItems ?? []).length > 0 && (
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Yapılan İşlemler / Değişen Parçalar
+              </div>
+              <ul className="mt-2 divide-y rounded-lg border bg-background">
+                {(formData.serviceItems ?? []).map((it, i) => (
+                  <li key={`${it.title}-${i}`} className="flex justify-between gap-3 px-3 py-2">
+                    <span className="text-sm font-semibold">
+                      {i + 1}. {it.title}
+                    </span>
+                    <span className="shrink-0 text-sm text-muted-foreground">
+                      {[it.qty, it.unit].filter(Boolean).join(" ")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {o.service_note && <p className="whitespace-pre-wrap text-sm">{o.service_note}</p>}
           {o.signature_data && (
             <div>
               <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
