@@ -51,7 +51,13 @@ type Order = {
   status: string;
   created_at: string;
   completed_at: string | null;
-  customers: { name: string; forklift_brand: string; forklift_model: string } | null;
+  customers: {
+    name: string;
+    company_name: string;
+    contact_person: string;
+    forklift_brand: string;
+    forklift_model: string;
+  } | null;
   technicians: { full_name: string } | null;
 };
 
