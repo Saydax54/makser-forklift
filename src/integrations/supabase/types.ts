@@ -17,6 +17,8 @@ export type Database = {
       customers: {
         Row: {
           address: string
+          company_name: string
+          contact_person: string
           created_at: string
           email: string
           forklift_brand: string
@@ -28,6 +30,8 @@ export type Database = {
         }
         Insert: {
           address?: string
+          company_name?: string
+          contact_person?: string
           created_at?: string
           email?: string
           forklift_brand?: string
@@ -39,6 +43,8 @@ export type Database = {
         }
         Update: {
           address?: string
+          company_name?: string
+          contact_person?: string
           created_at?: string
           email?: string
           forklift_brand?: string
@@ -124,6 +130,7 @@ export type Database = {
           customer_id: string
           fault_description: string
           id: string
+          service_items: Json
           service_note: string
           signature_data: string | null
           started_at: string | null
@@ -137,6 +144,7 @@ export type Database = {
           customer_id: string
           fault_description: string
           id?: string
+          service_items?: Json
           service_note?: string
           signature_data?: string | null
           started_at?: string | null
@@ -150,6 +158,7 @@ export type Database = {
           customer_id?: string
           fault_description?: string
           id?: string
+          service_items?: Json
           service_note?: string
           signature_data?: string | null
           started_at?: string | null
