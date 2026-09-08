@@ -276,7 +276,9 @@ function NewOrderForm({
             <option value="">Seçiniz…</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} — {c.forklift_brand} {c.forklift_model}
+                {c.company_name || c.name}
+                {c.contact_person ? ` (${c.contact_person})` : ""} — {c.forklift_brand}{" "}
+                {c.forklift_model}
               </option>
             ))}
           </select>
