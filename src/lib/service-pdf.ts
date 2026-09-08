@@ -6,6 +6,8 @@ export type ServiceFormData = {
   orderNo: string;
   customer: {
     name: string;
+    company_name?: string;
+    contact_person?: string;
     phone: string;
     email: string;
     address: string;
@@ -16,6 +18,7 @@ export type ServiceFormData = {
   technicianName: string;
   faultDescription: string;
   serviceNote: string;
+  serviceItems?: { title: string; qty: string; unit: string }[];
   signatureData: string | null;
   createdAt: string;
   completedAt: string | null;
