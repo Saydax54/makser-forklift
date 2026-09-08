@@ -56,6 +56,8 @@ type Order = {
 };
 
 const emptyCustomer = {
+  company_name: "",
+  contact_person: "",
   name: "",
   phone: "",
   email: "",
@@ -282,7 +284,8 @@ function NewOrderForm({
         <div className="grid gap-3 sm:grid-cols-2">
           {(
             [
-              ["name", "İsim *", "sm:col-span-2"],
+              ["company_name", "Firma Ünvanı *", "sm:col-span-2"],
+              ["contact_person", "Yetkili Kişi", ""],
               ["phone", "Telefon", ""],
               ["email", "E-posta", ""],
               ["address", "Adres", "sm:col-span-2"],
