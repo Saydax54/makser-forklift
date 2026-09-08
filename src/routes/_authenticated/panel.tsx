@@ -89,7 +89,7 @@ function Panel() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, created_at, completed_at, customers(name, forklift_brand, forklift_model), technicians(full_name)",
+          "id, fault_description, status, created_at, completed_at, customers(name, company_name, contact_person, forklift_brand, forklift_model), technicians(full_name)",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -167,7 +167,9 @@ function Panel() {
                     className="block rounded-lg border bg-background p-3 transition-colors hover:border-primary"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold">{o.customers?.name ?? "-"}</span>
+                      <span className="font-semibold">
+                        {o.customers?.company_name || o.customers?.name || "-"}
+                      </span>
                       <span
                         className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusBadgeClass(o.status)}`}
                       >
