@@ -72,8 +72,9 @@ function buildHtml(d: ServiceFormData) {
     ${row("İş Emri Tarihi", formatDate(d.createdAt))}
     <div style="margin-top:12px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Arıza Tanımı</div>
     <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:52px">${escapeHtml(d.faultDescription)}</div>
-    <div style="margin-top:14px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Yapılan İşlemler / Servis Notu</div>
-    <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:80px">${escapeHtml(d.serviceNote)}</div>
+    ${itemsTable(d.serviceItems ?? [])}
+    <div style="margin-top:14px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Teknisyen Görüşü / Servis Notu</div>
+    <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:60px">${escapeHtml(d.serviceNote)}</div>
 
     <div style="margin-top:28px;display:flex;justify-content:space-between;align-items:flex-end">
       <div style="font-size:11px;color:#6b7280;max-width:360px;line-height:1.5">
