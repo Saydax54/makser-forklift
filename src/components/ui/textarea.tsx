@@ -1,9 +1,12 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { trUpper } from "@/lib/uppercase";
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<"textarea">>(
-  ({ className, ...props }, ref) => {
+type TextareaProps = React.ComponentProps<"textarea"> & { noUppercase?: boolean };
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, noUppercase, onChange, ...props }, ref) => {
     return (
       <textarea
         className={cn(
@@ -11,6 +14,17 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<"tex
           className,
         )}
         ref={ref}
+        onChange={(e) => {
+          if (!noUppercase) {
+            const next = trUpper(e.target.value);
+            if (next !== e.target.value) {
+              const pos = e.target.selectionStart;
+              e.target.value = next;
+              if (pos !== null) e.target.setSelectionRange(pos, pos);
+            }
+          }
+          onChange?.(e);
+        }}
         {...props}
       />
     );

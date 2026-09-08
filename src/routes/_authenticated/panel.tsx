@@ -45,6 +45,14 @@ type Customer = {
 
 type Technician = { id: string; full_name: string; phone: string; status: string };
 
+type Forklift = {
+  id: string;
+  customer_id: string;
+  brand: string;
+  model: string;
+  serial_no: string;
+};
+
 type Order = {
   id: string;
   fault_description: string;
@@ -115,6 +123,18 @@ function Panel() {
     },
   });
 
+  const forklifts = useQuery({
+    queryKey: ["forklifts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("forklifts")
+        .select("id, customer_id, brand, model, serial_no")
+        .order("created_at");
+      if (error) throw error;
+      return (data ?? []) as Forklift[];
+    },
+  });
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
@@ -132,10 +152,12 @@ function Panel() {
             <NewOrderForm
               customers={customers.data ?? []}
               technicians={technicians.data ?? []}
+              forklifts={forklifts.data ?? []}
               onDone={() => {
                 setOpen(false);
                 void qc.invalidateQueries({ queryKey: ["orders"] });
                 void qc.invalidateQueries({ queryKey: ["customers"] });
+                void qc.invalidateQueries({ queryKey: ["forklifts"] });
               }}
             />
           </DialogContent>
@@ -197,18 +219,25 @@ function Panel() {
 function NewOrderForm({
   customers,
   technicians,
+  forklifts,
   onDone,
 }: {
   customers: Customer[];
   technicians: Technician[];
+  forklifts: Forklift[];
   onDone: () => void;
 }) {
   const [mode, setMode] = useState<"existing" | "new">(customers.length ? "existing" : "new");
   const [customerId, setCustomerId] = useState("");
+  const [forkliftId, setForkliftId] = useState("");
+  const [newForklift, setNewForklift] = useState({ brand: "", model: "", serial_no: "" });
   const [form, setForm] = useState(emptyCustomer);
   const [fault, setFault] = useState("");
   const [technicianId, setTechnicianId] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const customerForklifts = forklifts.filter((f) => f.customer_id === customerId);
+  const addingForklift = forkliftId === "__new";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -219,6 +248,8 @@ function NewOrderForm({
     setBusy(true);
     try {
       let cid = customerId;
+      let fid: string | null = null;
+
       if (mode === "new") {
         const company = form.company_name.trim();
         if (!company) throw new Error("Firma ünvanı gerekli");
@@ -229,11 +260,49 @@ function NewOrderForm({
           .single();
         if (error) throw error;
         cid = data.id;
+        if (form.forklift_brand || form.forklift_model || form.serial_no) {
+          const { data: fk, error: fkError } = await supabase
+            .from("forklifts")
+            .insert({
+              customer_id: cid,
+              brand: form.forklift_brand,
+              model: form.forklift_model,
+              serial_no: form.serial_no,
+            })
+            .select("id")
+            .single();
+          if (fkError) throw fkError;
+          fid = fk.id;
+        }
+      } else {
+        if (!cid) throw new Error("Müşteri seçin");
+        if (addingForklift) {
+          const brand = newForklift.brand.trim();
+          const model = newForklift.model.trim();
+          if (!brand && !model && !newForklift.serial_no.trim())
+            throw new Error("Yeni forklift bilgilerini girin");
+          const { data: fk, error: fkError } = await supabase
+            .from("forklifts")
+            .insert({
+              customer_id: cid,
+              brand,
+              model,
+              serial_no: newForklift.serial_no.trim(),
+            })
+            .select("id")
+            .single();
+          if (fkError) throw fkError;
+          fid = fk.id;
+        } else {
+          fid = forkliftId || null;
+        }
       }
+
       if (!cid) throw new Error("Müşteri seçin");
 
       const { error: orderError } = await supabase.from("work_orders").insert({
         customer_id: cid,
+        forklift_id: fid,
         technician_id: technicianId || null,
         fault_description: fault.trim(),
         status: "pending",
@@ -272,24 +341,83 @@ function NewOrderForm({
       </div>
 
       {mode === "existing" ? (
-        <div className="space-y-1.5">
-          <Label htmlFor="musteri">Müşteri</Label>
-          <select
-            id="musteri"
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-            required
-          >
-            <option value="">Seçiniz…</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.company_name || c.name}
-                {c.contact_person ? ` (${c.contact_person})` : ""} — {c.forklift_brand}{" "}
-                {c.forklift_model}
-              </option>
-            ))}
-          </select>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="musteri">Müşteri</Label>
+            <select
+              id="musteri"
+              value={customerId}
+              onChange={(e) => {
+                setCustomerId(e.target.value);
+                setForkliftId("");
+              }}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              required
+            >
+              <option value="">Seçiniz…</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.company_name || c.name}
+                  {c.contact_person ? ` (${c.contact_person})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {customerId && (
+            <div className="space-y-1.5">
+              <Label htmlFor="forklift">Forklift</Label>
+              <select
+                id="forklift"
+                value={forkliftId}
+                onChange={(e) => setForkliftId(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Seçiniz…</option>
+                {customerForklifts.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {[f.brand, f.model, f.serial_no].filter(Boolean).join(" · ") || "Bilgisiz forklift"}
+                  </option>
+                ))}
+                <option value="__new">+ Yeni forklift ekle</option>
+              </select>
+            </div>
+          )}
+
+          {addingForklift && (
+            <div className="grid gap-3 rounded-lg border bg-muted/40 p-3 sm:grid-cols-2">
+              <p className="text-xs text-muted-foreground sm:col-span-2">
+                Bu forklift seçili müşteriye tanımlanacak.
+              </p>
+              <div className="space-y-1.5">
+                <Label htmlFor="nf-brand">Marka</Label>
+                <Input
+                  id="nf-brand"
+                  maxLength={80}
+                  value={newForklift.brand}
+                  onChange={(e) => setNewForklift({ ...newForklift, brand: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="nf-model">Model</Label>
+                <Input
+                  id="nf-model"
+                  maxLength={80}
+                  value={newForklift.model}
+                  onChange={(e) => setNewForklift({ ...newForklift, model: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="nf-serial">Seri No</Label>
+                <Input
+                  id="nf-serial"
+                  maxLength={80}
+                  value={newForklift.serial_no}
+                  onChange={(e) => setNewForklift({ ...newForklift, serial_no: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">

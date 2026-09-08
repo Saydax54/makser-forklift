@@ -1,9 +1,13 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { shouldUppercase, trUpper } from "@/lib/uppercase";
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
+type InputProps = React.ComponentProps<"input"> & { noUppercase?: boolean };
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, noUppercase, onChange, ...props }, ref) => {
+    const upper = shouldUppercase(type, noUppercase);
     return (
       <input
         type={type}
@@ -12,6 +16,17 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className,
         )}
         ref={ref}
+        onChange={(e) => {
+          if (upper) {
+            const next = trUpper(e.target.value);
+            if (next !== e.target.value) {
+              const pos = e.target.selectionStart;
+              e.target.value = next;
+              if (pos !== null) e.target.setSelectionRange(pos, pos);
+            }
+          }
+          onChange?.(e);
+        }}
         {...props}
       />
     );
