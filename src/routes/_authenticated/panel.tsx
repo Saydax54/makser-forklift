@@ -45,6 +45,14 @@ type Customer = {
 
 type Technician = { id: string; full_name: string; phone: string; status: string };
 
+type Forklift = {
+  id: string;
+  customer_id: string;
+  brand: string;
+  model: string;
+  serial_no: string;
+};
+
 type Order = {
   id: string;
   fault_description: string;
