@@ -172,7 +172,9 @@ function OrderDetail() {
       <div className="rounded-xl border bg-card p-4 shadow-panel">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-xl font-extrabold">{formData.customer.name}</h1>
+            <h1 className="font-display text-xl font-extrabold">
+              {formData.customer.company_name || formData.customer.name}
+            </h1>
             <p className="text-sm text-muted-foreground">
               {formData.customer.forklift_brand} {formData.customer.forklift_model} ·{" "}
               {formData.customer.serial_no || "Seri no yok"}
