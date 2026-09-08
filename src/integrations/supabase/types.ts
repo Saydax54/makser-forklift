@@ -56,6 +56,41 @@ export type Database = {
         }
         Relationships: []
       }
+      forklifts: {
+        Row: {
+          brand: string
+          created_at: string
+          customer_id: string
+          id: string
+          model: string
+          serial_no: string
+        }
+        Insert: {
+          brand?: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          model?: string
+          serial_no?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          model?: string
+          serial_no?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forklifts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -129,6 +164,7 @@ export type Database = {
           created_by: string | null
           customer_id: string
           fault_description: string
+          forklift_id: string | null
           id: string
           service_items: Json
           service_note: string
@@ -143,6 +179,7 @@ export type Database = {
           created_by?: string | null
           customer_id: string
           fault_description: string
+          forklift_id?: string | null
           id?: string
           service_items?: Json
           service_note?: string
@@ -157,6 +194,7 @@ export type Database = {
           created_by?: string | null
           customer_id?: string
           fault_description?: string
+          forklift_id?: string | null
           id?: string
           service_items?: Json
           service_note?: string
@@ -171,6 +209,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_forklift_id_fkey"
+            columns: ["forklift_id"]
+            isOneToOne: false
+            referencedRelation: "forklifts"
             referencedColumns: ["id"]
           },
           {
