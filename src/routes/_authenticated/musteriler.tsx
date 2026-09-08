@@ -98,7 +98,8 @@ function CustomersPage() {
             <form onSubmit={save} className="grid gap-3 sm:grid-cols-2">
               {(
                 [
-                  ["name", "İsim *", "sm:col-span-2"],
+                  ["company_name", "Firma Ünvanı *", "sm:col-span-2"],
+                  ["contact_person", "Yetkili Kişi", ""],
                   ["phone", "Telefon", ""],
                   ["email", "E-posta", ""],
                   ["address", "Adres", "sm:col-span-2"],
