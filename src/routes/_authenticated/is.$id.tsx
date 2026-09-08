@@ -94,6 +94,7 @@ function OrderDetail() {
     technicianName: o.technicians?.full_name ?? "-",
     faultDescription: o.fault_description,
     serviceNote: note || o.service_note,
+    serviceItems: items ?? parseServiceItems(o.service_items),
     signatureData: signature ?? o.signature_data,
     createdAt: o.created_at,
     completedAt: o.completed_at,
