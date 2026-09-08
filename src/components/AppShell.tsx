@@ -16,6 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           { to: "/panel", label: "İş Emirleri" },
           { to: "/musteriler", label: "Müşteriler" },
           { to: "/teknisyenler", label: "Teknisyenler" },
+          { to: "/ayarlar", label: "Ayarlar" },
         ]
       : [{ to: "/gorevlerim", label: "Görevlerim" }];
 

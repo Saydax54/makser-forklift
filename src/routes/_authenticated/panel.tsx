@@ -33,6 +33,8 @@ export const Route = createFileRoute("/_authenticated/panel")({
 type Customer = {
   id: string;
   name: string;
+  company_name: string;
+  contact_person: string;
   phone: string;
   email: string;
   address: string;
@@ -49,11 +51,19 @@ type Order = {
   status: string;
   created_at: string;
   completed_at: string | null;
-  customers: { name: string; forklift_brand: string; forklift_model: string } | null;
+  customers: {
+    name: string;
+    company_name: string;
+    contact_person: string;
+    forklift_brand: string;
+    forklift_model: string;
+  } | null;
   technicians: { full_name: string } | null;
 };
 
 const emptyCustomer = {
+  company_name: "",
+  contact_person: "",
   name: "",
   phone: "",
   email: "",
@@ -79,7 +89,7 @@ function Panel() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, created_at, completed_at, customers(name, forklift_brand, forklift_model), technicians(full_name)",
+          "id, fault_description, status, created_at, completed_at, customers(name, company_name, contact_person, forklift_brand, forklift_model), technicians(full_name)",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -157,7 +167,9 @@ function Panel() {
                     className="block rounded-lg border bg-background p-3 transition-colors hover:border-primary"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold">{o.customers?.name ?? "-"}</span>
+                      <span className="font-semibold">
+                        {o.customers?.company_name || o.customers?.name || "-"}
+                      </span>
                       <span
                         className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusBadgeClass(o.status)}`}
                       >
@@ -208,10 +220,11 @@ function NewOrderForm({
     try {
       let cid = customerId;
       if (mode === "new") {
-        if (!form.name.trim()) throw new Error("Müşteri adı gerekli");
+        const company = form.company_name.trim();
+        if (!company) throw new Error("Firma ünvanı gerekli");
         const { data, error } = await supabase
           .from("customers")
-          .insert({ ...form, name: form.name.trim() })
+          .insert({ ...form, company_name: company, name: company })
           .select("id")
           .single();
         if (error) throw error;
@@ -271,7 +284,9 @@ function NewOrderForm({
             <option value="">Seçiniz…</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} — {c.forklift_brand} {c.forklift_model}
+                {c.company_name || c.name}
+                {c.contact_person ? ` (${c.contact_person})` : ""} — {c.forklift_brand}{" "}
+                {c.forklift_model}
               </option>
             ))}
           </select>
@@ -280,7 +295,8 @@ function NewOrderForm({
         <div className="grid gap-3 sm:grid-cols-2">
           {(
             [
-              ["name", "İsim *", "sm:col-span-2"],
+              ["company_name", "Firma Ünvanı *", "sm:col-span-2"],
+              ["contact_person", "Yetkili Kişi", ""],
               ["phone", "Telefon", ""],
               ["email", "E-posta", ""],
               ["address", "Adres", "sm:col-span-2"],

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as GirisRouteImport } from './routes/giris'
+import { Route as AuthenticatedAyarlarRouteImport } from './routes/_authenticated/ayarlar'
 import { Route as AuthenticatedGorevlerimRouteImport } from './routes/_authenticated/gorevlerim'
 import { Route as AuthenticatedMusterilerRouteImport } from './routes/_authenticated/musteriler'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
@@ -31,6 +32,11 @@ const GirisRoute = GirisRouteImport.update({
   id: '/giris',
   path: '/giris',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAyarlarRoute = AuthenticatedAyarlarRouteImport.update({
+  id: '/ayarlar',
+  path: '/ayarlar',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedGorevlerimRoute = AuthenticatedGorevlerimRouteImport.update({
   id: '/gorevlerim',
@@ -62,6 +68,7 @@ const AuthenticatedIsIdRoute = AuthenticatedIsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/giris': typeof GirisRoute
+  '/ayarlar': typeof AuthenticatedAyarlarRoute
   '/gorevlerim': typeof AuthenticatedGorevlerimRoute
   '/musteriler': typeof AuthenticatedMusterilerRoute
   '/panel': typeof AuthenticatedPanelRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/giris': typeof GirisRoute
+  '/ayarlar': typeof AuthenticatedAyarlarRoute
   '/gorevlerim': typeof AuthenticatedGorevlerimRoute
   '/musteriler': typeof AuthenticatedMusterilerRoute
   '/panel': typeof AuthenticatedPanelRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/giris': typeof GirisRoute
+  '/_authenticated/ayarlar': typeof AuthenticatedAyarlarRoute
   '/_authenticated/gorevlerim': typeof AuthenticatedGorevlerimRoute
   '/_authenticated/musteriler': typeof AuthenticatedMusterilerRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/giris'
+    | '/ayarlar'
     | '/gorevlerim'
     | '/musteriler'
     | '/panel'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/giris'
+    | '/ayarlar'
     | '/gorevlerim'
     | '/musteriler'
     | '/panel'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/giris'
+    | '/_authenticated/ayarlar'
     | '/_authenticated/gorevlerim'
     | '/_authenticated/musteriler'
     | '/_authenticated/panel'
@@ -147,6 +159,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/giris'
       preLoaderRoute: typeof GirisRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/ayarlar': {
+      id: '/_authenticated/ayarlar'
+      path: '/ayarlar'
+      fullPath: '/ayarlar'
+      preLoaderRoute: typeof AuthenticatedAyarlarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/gorevlerim': {
       id: '/_authenticated/gorevlerim'
@@ -187,6 +206,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAyarlarRoute: typeof AuthenticatedAyarlarRoute
   AuthenticatedGorevlerimRoute: typeof AuthenticatedGorevlerimRoute
   AuthenticatedMusterilerRoute: typeof AuthenticatedMusterilerRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
@@ -195,6 +215,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAyarlarRoute: AuthenticatedAyarlarRoute,
   AuthenticatedGorevlerimRoute: AuthenticatedGorevlerimRoute,
   AuthenticatedMusterilerRoute: AuthenticatedMusterilerRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,

@@ -28,6 +28,8 @@ export const Route = createFileRoute("/_authenticated/musteriler")({
 });
 
 const empty = {
+  company_name: "",
+  contact_person: "",
   name: "",
   phone: "",
   email: "",
@@ -55,12 +57,15 @@ function CustomersPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) {
-      toast.error("Müşteri adı gerekli");
+    const company = form.company_name.trim();
+    if (!company) {
+      toast.error("Firma ünvanı gerekli");
       return;
     }
     setBusy(true);
-    const { error } = await supabase.from("customers").insert({ ...form, name: form.name.trim() });
+    const { error } = await supabase
+      .from("customers")
+      .insert({ ...form, company_name: company, name: company });
     setBusy(false);
     if (error) {
       toast.error(error.message);
@@ -73,7 +78,9 @@ function CustomersPage() {
   }
 
   const list = (customers.data ?? []).filter((c) =>
-    `${c.name} ${c.phone} ${c.serial_no}`.toLocaleLowerCase("tr").includes(search.toLocaleLowerCase("tr")),
+    `${c.company_name} ${c.name} ${c.contact_person} ${c.phone} ${c.serial_no}`
+      .toLocaleLowerCase("tr")
+      .includes(search.toLocaleLowerCase("tr")),
   );
 
   return (
@@ -93,7 +100,8 @@ function CustomersPage() {
             <form onSubmit={save} className="grid gap-3 sm:grid-cols-2">
               {(
                 [
-                  ["name", "İsim *", "sm:col-span-2"],
+                  ["company_name", "Firma Ünvanı *", "sm:col-span-2"],
+                  ["contact_person", "Yetkili Kişi", ""],
                   ["phone", "Telefon", ""],
                   ["email", "E-posta", ""],
                   ["address", "Adres", "sm:col-span-2"],
@@ -135,8 +143,9 @@ function CustomersPage() {
         )}
         {list.map((c) => (
           <div key={c.id} className="rounded-xl border bg-card p-4 shadow-panel">
-            <div className="font-display text-base font-bold">{c.name}</div>
+            <div className="font-display text-base font-bold">{c.company_name || c.name}</div>
             <div className="mt-1 grid gap-x-4 gap-y-0.5 text-sm text-muted-foreground sm:grid-cols-2">
+              <span>{c.contact_person ? `Yetkili: ${c.contact_person}` : "Yetkili girilmedi"}</span>
               <span>{c.phone || "Telefon yok"}</span>
               <span>{c.email || "E-posta yok"}</span>
               <span className="sm:col-span-2">{c.address}</span>

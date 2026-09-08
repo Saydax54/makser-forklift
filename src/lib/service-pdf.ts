@@ -6,6 +6,8 @@ export type ServiceFormData = {
   orderNo: string;
   customer: {
     name: string;
+    company_name?: string;
+    contact_person?: string;
     phone: string;
     email: string;
     address: string;
@@ -16,6 +18,7 @@ export type ServiceFormData = {
   technicianName: string;
   faultDescription: string;
   serviceNote: string;
+  serviceItems?: { title: string; qty: string; unit: string }[];
   signatureData: string | null;
   createdAt: string;
   completedAt: string | null;
@@ -36,6 +39,29 @@ function escapeHtml(s: string) {
   );
 }
 
+function itemsTable(items: { title: string; qty: string; unit: string }[]) {
+  const rows = items.length
+    ? items
+        .map(
+          (i, idx) => `<tr>
+            <td style="padding:6px 8px;border-bottom:1px solid #eceff3;font-size:12px;color:#6b7280;width:28px">${idx + 1}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eceff3;font-size:13px">${escapeHtml(i.title)}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eceff3;font-size:13px;text-align:right;white-space:nowrap">${escapeHtml([i.qty, i.unit].filter(Boolean).join(" "))}</td>
+          </tr>`,
+        )
+        .join("")
+    : `<tr><td colspan="3" style="padding:10px 8px;font-size:12px;color:#9ca3af">Madde girilmedi.</td></tr>`;
+  return `<div style="margin-top:14px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Yapılan İşlemler / Değişen Parçalar</div>
+    <table style="width:100%;border-collapse:collapse;margin-top:6px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+      <thead><tr style="background:#f8fafc">
+        <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:left">#</th>
+        <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:left">İşlem / Parça</th>
+        <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:right">Miktar</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
 function buildHtml(d: ServiceFormData) {
   return `
   <div style="width:794px;padding:44px;background:#ffffff;font-family:Manrope,Arial,Helvetica,sans-serif;color:#111827;box-sizing:border-box">
@@ -53,7 +79,8 @@ function buildHtml(d: ServiceFormData) {
     </div>
 
     <div style="margin-top:22px;font-size:13px;font-weight:700;color:#f0a13c;text-transform:uppercase;letter-spacing:.06em">Müşteri Bilgileri</div>
-    ${row("Müşteri", d.customer.name)}
+    ${row("Firma Ünvanı", d.customer.company_name || d.customer.name)}
+    ${row("Yetkili Kişi", d.customer.contact_person || d.customer.name)}
     ${row("Telefon", d.customer.phone)}
     ${row("E-posta", d.customer.email)}
     ${row("Adres", d.customer.address)}
@@ -68,8 +95,9 @@ function buildHtml(d: ServiceFormData) {
     ${row("İş Emri Tarihi", formatDate(d.createdAt))}
     <div style="margin-top:12px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Arıza Tanımı</div>
     <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:52px">${escapeHtml(d.faultDescription)}</div>
-    <div style="margin-top:14px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Yapılan İşlemler / Servis Notu</div>
-    <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:80px">${escapeHtml(d.serviceNote)}</div>
+    ${itemsTable(d.serviceItems ?? [])}
+    <div style="margin-top:14px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Teknisyen Görüşü / Servis Notu</div>
+    <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:60px">${escapeHtml(d.serviceNote)}</div>
 
     <div style="margin-top:28px;display:flex;justify-content:space-between;align-items:flex-end">
       <div style="font-size:11px;color:#6b7280;max-width:360px;line-height:1.5">

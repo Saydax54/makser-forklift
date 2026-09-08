@@ -12,6 +12,11 @@ import {
   type ServiceFormData,
 } from "@/lib/service-pdf";
 import { SignaturePad } from "@/components/SignaturePad";
+import {
+  ServiceItemsEditor,
+  parseServiceItems,
+  type ServiceItem,
+} from "@/components/ServiceItemsEditor";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,6 +44,7 @@ type OrderRow = {
   started_at: string | null;
   completed_at: string | null;
   technician_id: string | null;
+  service_items: unknown;
   customers: ServiceFormData["customer"] | null;
   technicians: { full_name: string } | null;
 };
@@ -48,6 +54,7 @@ function OrderDetail() {
   const { role } = useAuth();
   const qc = useQueryClient();
   const [note, setNote] = useState("");
+  const [items, setItems] = useState<ServiceItem[] | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -57,13 +64,14 @@ function OrderDetail() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, service_note, signature_data, created_at, started_at, completed_at, technician_id, customers(name, phone, email, address, forklift_brand, forklift_model, serial_no), technicians(full_name)",
+          "id, fault_description, status, service_note, service_items, signature_data, created_at, started_at, completed_at, technician_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), technicians(full_name)",
         )
         .eq("id", id)
         .single();
       if (error) throw error;
       const row = data as unknown as OrderRow;
       setNote((prev) => prev || row.service_note);
+      setItems((prev) => prev ?? parseServiceItems(row.service_items));
       return row;
     },
   });
@@ -86,6 +94,7 @@ function OrderDetail() {
     technicianName: o.technicians?.full_name ?? "-",
     faultDescription: o.fault_description,
     serviceNote: note || o.service_note,
+    serviceItems: items ?? parseServiceItems(o.service_items),
     signatureData: signature ?? o.signature_data,
     createdAt: o.created_at,
     completedAt: o.completed_at,
@@ -107,8 +116,8 @@ function OrderDetail() {
   }
 
   async function complete() {
-    if (!note.trim()) {
-      toast.error("Servis notu yazın");
+    if (!(items ?? []).length && !note.trim()) {
+      toast.error("En az bir işlem maddesi ekleyin veya servis notu yazın");
       return;
     }
     if (!signature && !o?.signature_data) {
@@ -123,6 +132,7 @@ function OrderDetail() {
         .update({
           status: "completed",
           service_note: note.trim(),
+          service_items: items ?? [],
           signature_data: signature ?? o?.signature_data ?? null,
           completed_at: completedAt,
         })
@@ -162,7 +172,9 @@ function OrderDetail() {
       <div className="rounded-xl border bg-card p-4 shadow-panel">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-xl font-extrabold">{formData.customer.name}</h1>
+            <h1 className="font-display text-xl font-extrabold">
+              {formData.customer.company_name || formData.customer.name}
+            </h1>
             <p className="text-sm text-muted-foreground">
               {formData.customer.forklift_brand} {formData.customer.forklift_model} ·{" "}
               {formData.customer.serial_no || "Seri no yok"}
@@ -176,6 +188,7 @@ function OrderDetail() {
         </div>
 
         <dl className="mt-4 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
+          <Row label="Yetkili Kişi" value={formData.customer.contact_person ?? ""} />
           <Row label="Telefon" value={formData.customer.phone} href={`tel:${formData.customer.phone}`} />
           <Row label="E-posta" value={formData.customer.email} />
           <Row label="Adres" value={formData.customer.address} />
@@ -201,15 +214,19 @@ function OrderDetail() {
       {o.status === "in_progress" && canEdit && (
         <div className="space-y-4 rounded-xl border bg-card p-4 shadow-panel">
           <h2 className="font-display text-lg font-bold">Servis Formu</h2>
+          <div className="space-y-2">
+            <Label>Yapılan İşlemler / Değişen Parçalar</Label>
+            <ServiceItemsEditor items={items ?? []} onChange={setItems} />
+          </div>
           <div className="space-y-1.5">
-            <Label htmlFor="not">Yapılan İşlemler (Servis Notu)</Label>
+            <Label htmlFor="not">Teknisyen Görüşü / Ek Not</Label>
             <Textarea
               id="not"
-              rows={5}
+              rows={4}
               value={note}
               maxLength={2000}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Örn: Hidrolik hortum değişimi yapıldı, yağ seviyesi tamamlandı…"
+              placeholder="Örn: Fren balataları bir sonraki bakımda değişmeli, yağ kaçağı gözlenmedi…"
             />
           </div>
           <div className="space-y-1.5">
@@ -225,7 +242,26 @@ function OrderDetail() {
       {o.status === "completed" && (
         <div className="space-y-4 rounded-xl border bg-card p-4 shadow-panel">
           <h2 className="font-display text-lg font-bold">Tamamlanan Servis</h2>
-          <p className="whitespace-pre-wrap text-sm">{o.service_note}</p>
+          {(formData.serviceItems ?? []).length > 0 && (
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Yapılan İşlemler / Değişen Parçalar
+              </div>
+              <ul className="mt-2 divide-y rounded-lg border bg-background">
+                {(formData.serviceItems ?? []).map((it, i) => (
+                  <li key={`${it.title}-${i}`} className="flex justify-between gap-3 px-3 py-2">
+                    <span className="text-sm font-semibold">
+                      {i + 1}. {it.title}
+                    </span>
+                    <span className="shrink-0 text-sm text-muted-foreground">
+                      {[it.qty, it.unit].filter(Boolean).join(" ")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {o.service_note && <p className="whitespace-pre-wrap text-sm">{o.service_note}</p>}
           {o.signature_data && (
             <div>
               <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
