@@ -65,7 +65,7 @@ function OrderDetail() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, service_note, service_items, signature_data, created_at, started_at, completed_at, technician_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), technicians(full_name)",
+          "id, fault_description, status, service_note, service_items, signature_data, created_at, started_at, completed_at, technician_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(brand, model, serial_no), technicians(full_name)",
         )
         .eq("id", id)
         .single();
@@ -81,16 +81,23 @@ function OrderDetail() {
   if (order.isLoading) return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
   if (!o) return <p className="text-sm text-muted-foreground">İş emri bulunamadı.</p>;
 
+  const baseCustomer = o.customers ?? {
+    name: "-",
+    phone: "",
+    email: "",
+    address: "",
+    forklift_brand: "",
+    forklift_model: "",
+    serial_no: "",
+  };
+
   const formData: ServiceFormData = {
     orderNo: o.id.slice(0, 8).toUpperCase(),
-    customer: o.customers ?? {
-      name: "-",
-      phone: "",
-      email: "",
-      address: "",
-      forklift_brand: "",
-      forklift_model: "",
-      serial_no: "",
+    customer: {
+      ...baseCustomer,
+      forklift_brand: o.forklifts?.brand || baseCustomer.forklift_brand,
+      forklift_model: o.forklifts?.model || baseCustomer.forklift_model,
+      serial_no: o.forklifts?.serial_no || baseCustomer.serial_no,
     },
     technicianName: o.technicians?.full_name ?? "-",
     faultDescription: o.fault_description,
