@@ -143,8 +143,9 @@ function CustomersPage() {
         )}
         {list.map((c) => (
           <div key={c.id} className="rounded-xl border bg-card p-4 shadow-panel">
-            <div className="font-display text-base font-bold">{c.name}</div>
+            <div className="font-display text-base font-bold">{c.company_name || c.name}</div>
             <div className="mt-1 grid gap-x-4 gap-y-0.5 text-sm text-muted-foreground sm:grid-cols-2">
+              <span>{c.contact_person ? `Yetkili: ${c.contact_person}` : "Yetkili girilmedi"}</span>
               <span>{c.phone || "Telefon yok"}</span>
               <span>{c.email || "E-posta yok"}</span>
               <span className="sm:col-span-2">{c.address}</span>
