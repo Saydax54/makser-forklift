@@ -33,6 +33,8 @@ export const Route = createFileRoute("/_authenticated/panel")({
 type Customer = {
   id: string;
   name: string;
+  company_name: string;
+  contact_person: string;
   phone: string;
   email: string;
   address: string;
