@@ -17,6 +17,9 @@ import {
   parseServiceItems,
   type ServiceItem,
 } from "@/components/ServiceItemsEditor";
+import { ServiceTemplatePicker } from "@/components/ServiceTemplatePicker";
+import { mergeServiceItems } from "@/lib/service-templates";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -224,8 +227,16 @@ function OrderDetail() {
           <h2 className="font-display text-lg font-bold">Servis Formu</h2>
           <div className="space-y-2">
             <Label>Yapılan İşlemler / Değişen Parçalar</Label>
+            <ServiceTemplatePicker
+              onApply={(picked) => {
+                const merged = mergeServiceItems(items ?? [], picked);
+                setItems(merged);
+                toast.success("Şablon maddeleri listeye eklendi");
+              }}
+            />
             <ServiceItemsEditor items={items ?? []} onChange={setItems} />
           </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="not">Teknisyen Görüşü / Ek Not</Label>
             <Textarea

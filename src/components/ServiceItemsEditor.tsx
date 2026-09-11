@@ -59,9 +59,30 @@ export function ServiceItemsEditor({
                 {idx + 1}.
               </span>
               <span className="min-w-0 flex-1 text-sm font-semibold">{it.title}</span>
-              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-bold">
-                {[it.qty, it.unit].filter(Boolean).join(" ")}
-              </span>
+              <Input
+                aria-label={`${it.title} miktarı`}
+                value={it.qty}
+                inputMode="decimal"
+                maxLength={8}
+                onChange={(e) =>
+                  onChange(items.map((x, i) => (i === idx ? { ...x, qty: e.target.value } : x)))
+                }
+                className="h-8 w-14 shrink-0 px-2 text-center text-xs"
+              />
+              <select
+                aria-label={`${it.title} birimi`}
+                value={it.unit}
+                onChange={(e) =>
+                  onChange(items.map((x, i) => (i === idx ? { ...x, unit: e.target.value } : x)))
+                }
+                className="h-8 w-[4.5rem] shrink-0 rounded-md border border-input bg-background px-1 text-xs"
+              >
+                {UNITS.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
                 aria-label={`${it.title} maddesini sil`}
@@ -72,6 +93,7 @@ export function ServiceItemsEditor({
               </button>
             </li>
           ))}
+
         </ul>
       </div>
 

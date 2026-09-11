@@ -10,7 +10,11 @@ import { WORKSHOP } from "@/lib/workshop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ServiceItemsEditor, type ServiceItem } from "@/components/ServiceItemsEditor";
+import { FUEL_LABEL, fetchServiceTemplates, type FuelType } from "@/lib/service-templates";
+import { UserPlus, Trash2, Save } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/ayarlar")({
   head: () => ({
@@ -145,6 +149,10 @@ function SettingsPage() {
         </form>
       </section>
 
+      <ServiceTemplatesSection />
+
+
+
       <section className="rounded-xl border bg-card p-4 shadow-panel">
         <h2 className="font-display text-base font-bold">Kullanıcılar</h2>
         <div className="mt-3 space-y-2">
@@ -180,5 +188,174 @@ function SettingsPage() {
         </p>
       </section>
     </div>
+  );
+}
+
+function ServiceTemplatesSection() {
+  const qc = useQueryClient();
+  const templates = useQuery({ queryKey: ["service-templates"], queryFn: fetchServiceTemplates });
+  const [name, setName] = useState("");
+  const [fuelType, setFuelType] = useState<FuelType>("diesel");
+  const [description, setDescription] = useState("");
+  const [items, setItems] = useState<ServiceItem[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  function reset() {
+    setEditingId(null);
+    setName("");
+    setFuelType("diesel");
+    setDescription("");
+    setItems([]);
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error("Şablon adı gerekli");
+      return;
+    }
+    if (items.length === 0) {
+      toast.error("En az bir bakım kalemi ekleyin");
+      return;
+    }
+    setBusy(true);
+    const payload = {
+      name: name.trim(),
+      fuel_type: fuelType,
+      description: description.trim(),
+      items,
+    };
+    const { error } = editingId
+      ? await supabase.from("service_templates").update(payload).eq("id", editingId)
+      : await supabase.from("service_templates").insert(payload);
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(editingId ? "Şablon güncellendi" : "Şablon kaydedildi");
+    reset();
+    void qc.invalidateQueries({ queryKey: ["service-templates"] });
+  }
+
+  async function remove(id: string) {
+    const { error } = await supabase.from("service_templates").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (editingId === id) reset();
+    toast.success("Şablon silindi");
+    void qc.invalidateQueries({ queryKey: ["service-templates"] });
+  }
+
+  return (
+    <section className="rounded-xl border bg-card p-4 shadow-panel">
+      <h2 className="font-display text-base font-bold">Hazır Bakım Şablonları</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Dizel ve elektrikli forkliftlerin periyodik bakım kalemlerini şablon olarak kaydedin;
+        teknisyenler servis formunda tek dokunuşla listeye ekleyebilir.
+      </p>
+
+      <div className="mt-3 space-y-2">
+        {(templates.data ?? []).map((t) => (
+          <div key={t.id} className="rounded-lg border bg-background px-3 py-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">{t.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  {FUEL_LABEL[t.fuel_type]} · {t.items.length} kalem
+                </div>
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    setEditingId(t.id);
+                    setName(t.name);
+                    setFuelType(t.fuel_type);
+                    setDescription(t.description);
+                    setItems(t.items);
+                  }}
+                >
+                  Düzenle
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`${t.name} şablonunu sil`}
+                  onClick={() => void remove(t.id)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {(templates.data ?? []).length === 0 && (
+          <p className="text-sm text-muted-foreground">Henüz şablon yok.</p>
+        )}
+      </div>
+
+      <form onSubmit={save} className="mt-4 space-y-3 border-t pt-4">
+        <h3 className="text-sm font-bold">
+          {editingId ? "Şablonu Düzenle" : "Yeni Şablon Oluştur"}
+        </h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="t-name">Şablon Adı *</Label>
+            <Input
+              id="t-name"
+              value={name}
+              maxLength={120}
+              required
+              placeholder="DİZEL FORKLİFT PERİYODİK BAKIM"
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="t-fuel">Forklift Tipi *</Label>
+            <select
+              id="t-fuel"
+              value={fuelType}
+              onChange={(e) => setFuelType(e.target.value as FuelType)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="diesel">Dizel</option>
+              <option value="electric">Elektrikli</option>
+              <option value="all">Tümü</option>
+            </select>
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="t-desc">Açıklama</Label>
+          <Textarea
+            id="t-desc"
+            rows={2}
+            value={description}
+            maxLength={400}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Bakım Kalemleri</Label>
+          <ServiceItemsEditor items={items} onChange={setItems} />
+        </div>
+        <div className="flex gap-2">
+          <Button type="submit" className="flex-1" disabled={busy}>
+            <Save className="mr-1 size-4" /> {busy ? "Kaydediliyor…" : "Şablonu Kaydet"}
+          </Button>
+          {editingId && (
+            <Button type="button" variant="outline" onClick={reset}>
+              İptal
+            </Button>
+          )}
+        </div>
+      </form>
+    </section>
   );
 }
