@@ -202,6 +202,7 @@ export type Database = {
           service_items: Json
           service_note: string
           signature_data: string | null
+          signature_name: string
           started_at: string | null
           status: string
           technician_id: string | null
@@ -217,6 +218,7 @@ export type Database = {
           service_items?: Json
           service_note?: string
           signature_data?: string | null
+          signature_name?: string
           started_at?: string | null
           status?: string
           technician_id?: string | null
@@ -232,6 +234,7 @@ export type Database = {
           service_items?: Json
           service_note?: string
           signature_data?: string | null
+          signature_name?: string
           started_at?: string | null
           status?: string
           technician_id?: string | null

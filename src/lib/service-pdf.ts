@@ -20,6 +20,7 @@ export type ServiceFormData = {
   serviceNote: string;
   serviceItems?: { title: string; qty: string; unit: string }[];
   signatureData: string | null;
+  signerName?: string;
   createdAt: string;
   completedAt: string | null;
 };
@@ -108,7 +109,8 @@ function buildHtml(d: ServiceFormData) {
         <div style="width:240px;height:110px;border:1px solid #e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff">
           ${d.signatureData ? `<img src="${d.signatureData}" style="max-width:100%;max-height:100%" />` : ""}
         </div>
-        <div style="font-size:12px;margin-top:6px">${escapeHtml(d.customer.name)}</div>
+        <div style="font-size:12px;margin-top:6px;font-weight:700">${escapeHtml(d.signerName || d.customer.contact_person || d.customer.name)}</div>
+        <div style="font-size:10px;color:#6b7280">${escapeHtml(d.customer.company_name || d.customer.name)}</div>
       </div>
     </div>
 

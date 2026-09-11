@@ -1,0 +1,1 @@
+ALTER TABLE public.work_orders ADD COLUMN IF NOT EXISTS signature_name text NOT NULL DEFAULT '';

@@ -43,6 +43,7 @@ type OrderRow = {
   status: string;
   service_note: string;
   signature_data: string | null;
+  signature_name: string;
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
@@ -60,6 +61,7 @@ function OrderDetail() {
   const [note, setNote] = useState("");
   const [items, setItems] = useState<ServiceItem[] | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
+  const [signerName, setSignerName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const order = useQuery({
@@ -68,7 +70,7 @@ function OrderDetail() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, service_note, service_items, signature_data, created_at, started_at, completed_at, technician_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(brand, model, serial_no), technicians(full_name)",
+          "id, fault_description, status, service_note, service_items, signature_data, signature_name, created_at, started_at, completed_at, technician_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(brand, model, serial_no), technicians(full_name)",
         )
         .eq("id", id)
         .single();
@@ -107,6 +109,8 @@ function OrderDetail() {
     serviceNote: note || o.service_note,
     serviceItems: items ?? parseServiceItems(o.service_items),
     signatureData: signature ?? o.signature_data,
+    signerName:
+      signerName ?? o.signature_name ?? baseCustomer.contact_person ?? "",
     createdAt: o.created_at,
     completedAt: o.completed_at,
   };
@@ -131,6 +135,11 @@ function OrderDetail() {
       toast.error("En az bir işlem maddesi ekleyin veya servis notu yazın");
       return;
     }
+    const finalSigner = (signerName ?? o?.signature_name ?? "").trim();
+    if (!finalSigner) {
+      toast.error("İmza sahibinin adı ve soyadı gerekli");
+      return;
+    }
     if (!signature && !o?.signature_data) {
       toast.error("Müşteri imzası gerekli");
       return;
@@ -145,6 +154,7 @@ function OrderDetail() {
           service_note: note.trim(),
           service_items: items ?? [],
           signature_data: signature ?? o?.signature_data ?? null,
+          signature_name: finalSigner,
           completed_at: completedAt,
         })
         .eq("id", id);
@@ -152,7 +162,7 @@ function OrderDetail() {
       if (o?.technician_id) {
         await supabase.from("technicians").update({ status: "available" }).eq("id", o.technician_id);
       }
-      await downloadPdf({ ...formData, completedAt });
+      await downloadPdf({ ...formData, completedAt, signerName: finalSigner });
       toast.success("İş kapatıldı, servis formu hazırlandı");
       void qc.invalidateQueries();
     } catch (err) {
@@ -250,7 +260,12 @@ function OrderDetail() {
           </div>
           <div className="space-y-1.5">
             <Label>Dijital İmza (Müşteri)</Label>
-            <SignaturePad onChange={setSignature} />
+            <SignaturePad
+              signerName={signerName ?? o.signature_name ?? formData.customer.contact_person ?? ""}
+              onSignerNameChange={setSignerName}
+              value={signature ?? o.signature_data}
+              onChange={setSignature}
+            />
           </div>
           <Button className="w-full" size="lg" onClick={complete} disabled={busy}>
             <Check className="mr-2 size-4" /> {busy ? "İşleniyor…" : "Onayla ve Kapat"}
@@ -286,6 +301,9 @@ function OrderDetail() {
               <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Müşteri İmzası
               </div>
+              {formData.signerName && (
+                <p className="mt-1 text-sm font-semibold">{formData.signerName}</p>
+              )}
               <img
                 src={o.signature_data}
                 alt={`${formData.customer.name} dijital imzası`}
