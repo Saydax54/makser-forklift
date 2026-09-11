@@ -20,6 +20,7 @@ export type ServiceFormData = {
   serviceNote: string;
   serviceItems?: { title: string; qty: string; unit: string }[];
   signatureData: string | null;
+  signerName?: string;
   createdAt: string;
   completedAt: string | null;
 };
