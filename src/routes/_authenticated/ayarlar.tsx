@@ -10,7 +10,11 @@ import { WORKSHOP } from "@/lib/workshop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ServiceItemsEditor, type ServiceItem } from "@/components/ServiceItemsEditor";
+import { FUEL_LABEL, fetchServiceTemplates, type FuelType } from "@/lib/service-templates";
+import { UserPlus, Trash2, Save } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/ayarlar")({
   head: () => ({
@@ -144,6 +148,10 @@ function SettingsPage() {
           </Button>
         </form>
       </section>
+
+      <ServiceTemplatesSection />
+
+
 
       <section className="rounded-xl border bg-card p-4 shadow-panel">
         <h2 className="font-display text-base font-bold">Kullanıcılar</h2>
