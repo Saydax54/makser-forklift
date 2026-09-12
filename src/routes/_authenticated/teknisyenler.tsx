@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/teknisyenler")({
 function TechniciansPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
@@ -43,6 +44,12 @@ function TechniciansPage() {
     },
   });
 
+  function reset() {
+    setEditingId(null);
+    setFullName("");
+    setPhone("");
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!fullName.trim()) {
@@ -50,18 +57,31 @@ function TechniciansPage() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase
-      .from("technicians")
-      .insert({ full_name: fullName.trim(), phone });
+    const payload = { full_name: fullName.trim(), phone };
+    const { error } = editingId
+      ? await supabase.from("technicians").update(payload).eq("id", editingId)
+      : await supabase.from("technicians").insert(payload);
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Teknisyen eklendi");
-    setFullName("");
-    setPhone("");
+    toast.success(editingId ? "Teknisyen güncellendi" : "Teknisyen eklendi");
+    reset();
     setOpen(false);
+    void qc.invalidateQueries({ queryKey: ["technicians"] });
+  }
+
+  async function remove(id: string, name: string) {
+    if (!window.confirm(`${name} kaydı silinsin mi?`)) return;
+    const { error } = await supabase.from("technicians").delete().eq("id", id);
+    if (error) {
+      toast.error(
+        "Bu teknisyene atanmış iş emirleri olduğu için silinemedi. Önce iş emirlerini başka teknisyene aktarın veya silin.",
+      );
+      return;
+    }
+    toast.success("Teknisyen silindi");
     void qc.invalidateQueries({ queryKey: ["technicians"] });
   }
 
@@ -79,15 +99,21 @@ function TechniciansPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-xl font-extrabold">Teknisyenler</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+          open={open}
+          onOpenChange={(v) => {
+            setOpen(v);
+            if (!v) reset();
+          }}
+        >
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button size="sm" onClick={reset}>
               <Plus className="mr-1 size-4" /> Yeni
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Yeni Teknisyen</DialogTitle>
+              <DialogTitle>{editingId ? "Teknisyeni Düzenle" : "Yeni Teknisyen"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={save} className="space-y-3">
               <div className="space-y-1.5">
@@ -110,8 +136,8 @@ function TechniciansPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Teknisyenin sahada telefondan giriş yapabilmesi için giriş ekranından kendi
-                hesabını oluşturması yeterlidir.
+                Teknisyenin sahada telefondan giriş yapabilmesi için Ayarlar bölümünden hesap
+                oluşturmanız yeterlidir.
               </p>
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy ? "Kaydediliyor…" : "Kaydet"}
@@ -132,20 +158,43 @@ function TechniciansPage() {
             key={t.id}
             className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-panel"
           >
-            <div>
-              <div className="font-display text-base font-bold">{t.full_name}</div>
+            <div className="min-w-0">
+              <div className="truncate font-display text-base font-bold">{t.full_name}</div>
               <div className="text-sm text-muted-foreground">{t.phone || "Telefon yok"}</div>
             </div>
-            <Button
-              variant={t.status === "available" ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => toggle(t.id, t.status)}
-            >
-              {t.status === "available" ? "Müsait" : "Görevde"}
-            </Button>
+            <div className="flex shrink-0 items-center gap-1">
+              <Button
+                variant={t.status === "available" ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => toggle(t.id, t.status)}
+              >
+                {t.status === "available" ? "Müsait" : "Görevde"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditingId(t.id);
+                  setFullName(t.full_name);
+                  setPhone(t.phone);
+                  setOpen(true);
+                }}
+              >
+                <Pencil className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={`${t.full_name} kaydını sil`}
+                onClick={() => void remove(t.id, t.full_name)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
           </div>
         ))}
       </div>
     </div>
   );
 }
+
