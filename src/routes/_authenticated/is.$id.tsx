@@ -1,10 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { STATUS_LABEL, WORKSHOP, formatDate, statusBadgeClass } from "@/lib/workshop";
+import {
+  STATUS_LABEL,
+  STATUS_ORDER,
+  WORKSHOP,
+  formatDate,
+  statusBadgeClass,
+} from "@/lib/workshop";
 import {
   generateServicePdf,
   pdfFileName,
@@ -23,7 +29,16 @@ import { mergeServiceItems } from "@/lib/service-templates";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Download, MessageCircle, Play, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  MessageCircle,
+  Play,
+  Check,
+  Pencil,
+  Save,
+  Trash2,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/is/$id")({
   head: () => ({
