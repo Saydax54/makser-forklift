@@ -1,10 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { STATUS_LABEL, WORKSHOP, formatDate, statusBadgeClass } from "@/lib/workshop";
+import {
+  STATUS_LABEL,
+  STATUS_ORDER,
+  WORKSHOP,
+  formatDate,
+  statusBadgeClass,
+} from "@/lib/workshop";
 import {
   generateServicePdf,
   pdfFileName,
@@ -23,7 +29,16 @@ import { mergeServiceItems } from "@/lib/service-templates";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Download, MessageCircle, Play, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  MessageCircle,
+  Play,
+  Check,
+  Pencil,
+  Save,
+  Trash2,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/is/$id")({
   head: () => ({
@@ -330,6 +345,188 @@ function OrderDetail() {
           </p>
         </div>
       )}
+
+      {role === "admin" && <AdminOrderEditor order={o} />}
+    </div>
+  );
+}
+
+function AdminOrderEditor({ order }: { order: OrderRow }) {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState(order.status);
+  const [technicianId, setTechnicianId] = useState(order.technician_id ?? "");
+  const [fault, setFault] = useState(order.fault_description);
+  const [note, setNote] = useState(order.service_note);
+  const [items, setItems] = useState<ServiceItem[]>(parseServiceItems(order.service_items));
+  const [signerName, setSignerName] = useState(order.signature_name ?? "");
+  const [signature, setSignature] = useState<string | null>(order.signature_data);
+
+  const technicians = useQuery({
+    queryKey: ["technicians"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("technicians")
+        .select("id, full_name, status")
+        .order("full_name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  async function save() {
+    if (!fault.trim()) {
+      toast.error("Arıza tanımı boş olamaz");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase
+      .from("work_orders")
+      .update({
+        status,
+        technician_id: technicianId || null,
+        fault_description: fault.trim(),
+        service_note: note.trim(),
+        service_items: items,
+        signature_name: signerName.trim(),
+        signature_data: signature,
+        completed_at:
+          status === "completed" ? (order.completed_at ?? new Date().toISOString()) : null,
+      })
+      .eq("id", order.id);
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("İş emri güncellendi");
+    void qc.invalidateQueries();
+  }
+
+  async function remove() {
+    if (!window.confirm("Bu iş emri kalıcı olarak silinsin mi? Bu işlem geri alınamaz.")) return;
+    setBusy(true);
+    const { error } = await supabase.from("work_orders").delete().eq("id", order.id);
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("İş emri silindi");
+    void qc.invalidateQueries();
+    void navigate({ to: "/panel", replace: true });
+  }
+
+  return (
+    <div className="space-y-4 rounded-xl border border-dashed bg-card p-4 shadow-panel">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-bold">Yönetici Düzenlemesi</h2>
+          <p className="text-xs text-muted-foreground">
+            Tamamlanmış iş emirlerini de düzenleyebilir veya silebilirsiniz.
+          </p>
+        </div>
+        <Button size="sm" variant="secondary" onClick={() => setOpen((v) => !v)}>
+          <Pencil className="mr-1 size-4" /> {open ? "Kapat" : "Düzenle"}
+        </Button>
+      </div>
+
+      {open && (
+        <div className="space-y-4 border-t pt-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="a-status">Durum</Label>
+              <select
+                id="a-status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {STATUS_ORDER.map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS_LABEL[s]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="a-tech">Teknisyen</Label>
+              <select
+                id="a-tech"
+                value={technicianId}
+                onChange={(e) => setTechnicianId(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Atanmadı</option>
+                {(technicians.data ?? []).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="a-fault">Arıza Tanımı</Label>
+            <Textarea
+              id="a-fault"
+              rows={3}
+              maxLength={1000}
+              value={fault}
+              onChange={(e) => setFault(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Yapılan İşlemler / Değişen Parçalar</Label>
+            <ServiceTemplatePicker
+              onApply={(picked) => {
+                setItems(mergeServiceItems(items, picked));
+                toast.success("Şablon maddeleri listeye eklendi");
+              }}
+            />
+            <ServiceItemsEditor items={items} onChange={setItems} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="a-note">Teknisyen Görüşü / Ek Not</Label>
+            <Textarea
+              id="a-note"
+              rows={4}
+              maxLength={2000}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Dijital İmza (Müşteri)</Label>
+            <SignaturePad
+              signerName={signerName}
+              onSignerNameChange={setSignerName}
+              value={signature}
+              onChange={setSignature}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="flex-1" onClick={() => void save()} disabled={busy}>
+              <Save className="mr-2 size-4" /> {busy ? "Kaydediliyor…" : "Değişiklikleri Kaydet"}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={() => void remove()}
+              disabled={busy}
+            >
+              <Trash2 className="mr-2 size-4" /> İş Emrini Sil
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -352,3 +549,4 @@ function Row({ label, value, href }: { label: string; value: string; href?: stri
     </div>
   );
 }
+

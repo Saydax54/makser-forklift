@@ -5,7 +5,12 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { createAccount } from "@/lib/admin.functions";
+import {
+  createAccount,
+  deleteAccount,
+  listAccounts,
+  updateAccount,
+} from "@/lib/admin.functions";
 import { WORKSHOP } from "@/lib/workshop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,9 +25,9 @@ export const Route = createFileRoute("/_authenticated/ayarlar")({
   head: () => ({
     meta: [
       { title: "Ayarlar — MAKSER FORKLİFT" },
-      { name: "description", content: "Yönetici ve teknisyen hesaplarını oluşturun, atölye bilgilerini görün." },
+      { name: "description", content: "Yönetici ve teknisyen hesaplarını oluşturun, düzenleyin veya silin." },
       { property: "og:title", content: "Ayarlar — MAKSER FORKLİFT" },
-      { property: "og:description", content: "Kullanıcı hesabı oluşturma ve atölye ayarları." },
+      { property: "og:description", content: "Kullanıcı hesabı yönetimi ve atölye ayarları." },
     ],
   }),
   component: SettingsPage,
@@ -31,10 +36,14 @@ export const Route = createFileRoute("/_authenticated/ayarlar")({
 const empty = { fullName: "", email: "", password: "", phone: "", role: "technician" as const };
 
 function SettingsPage() {
-  const { role, loading } = useAuth();
+  const { role, loading, user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const create = useServerFn(createAccount);
+  const update = useServerFn(updateAccount);
+  const remove = useServerFn(deleteAccount);
+  const fetchAccounts = useServerFn(listAccounts);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<{
     fullName: string;
     email: string;
@@ -50,32 +59,62 @@ function SettingsPage() {
 
   const people = useQuery({
     queryKey: ["team"],
-    queryFn: async () => {
-      const [{ data: profiles }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, phone"),
-        supabase.from("user_roles").select("user_id, role"),
-      ]);
-      return (profiles ?? []).map((p) => ({
-        ...p,
-        role: (roles ?? []).find((r) => r.user_id === p.id)?.role ?? "technician",
-      }));
-    },
+    queryFn: () => fetchAccounts(),
+    enabled: role === "admin",
   });
+
+  function reset() {
+    setEditingId(null);
+    setForm(empty);
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (form.password.length < 6) {
+    if (!editingId && form.password.length < 6) {
       toast.error("Şifre en az 6 karakter olmalı");
+      return;
+    }
+    if (editingId && form.password && form.password.length < 6) {
+      toast.error("Yeni şifre en az 6 karakter olmalı");
       return;
     }
     setBusy(true);
     try {
-      await create({ data: form });
-      toast.success("Hesap oluşturuldu");
-      setForm(empty);
+      if (editingId) {
+        await update({
+          data: {
+            userId: editingId,
+            email: form.email,
+            password: form.password || undefined,
+            fullName: form.fullName,
+            phone: form.phone,
+            role: form.role,
+          },
+        });
+        toast.success("Hesap güncellendi");
+      } else {
+        await create({ data: form });
+        toast.success("Hesap oluşturuldu");
+      }
+      reset();
       void qc.invalidateQueries();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Hesap oluşturulamadı");
+      toast.error(err instanceof Error ? err.message : "Hesap kaydedilemedi");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeAccount(id: string, name: string) {
+    if (!window.confirm(`${name || "Bu kullanıcı"} hesabı kalıcı olarak silinsin mi?`)) return;
+    setBusy(true);
+    try {
+      await remove({ data: { userId: id } });
+      if (editingId === id) reset();
+      toast.success("Hesap silindi");
+      void qc.invalidateQueries();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Hesap silinemedi");
     } finally {
       setBusy(false);
     }
@@ -86,9 +125,13 @@ function SettingsPage() {
       <h1 className="font-display text-xl font-extrabold">Ayarlar</h1>
 
       <section className="rounded-xl border bg-card p-4 shadow-panel">
-        <h2 className="font-display text-base font-bold">Yeni Kullanıcı Hesabı</h2>
+        <h2 className="font-display text-base font-bold">
+          {editingId ? "Kullanıcıyı Düzenle" : "Yeni Kullanıcı Hesabı"}
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Yönetici veya saha teknisyeni hesabı açın; kullanıcı bu e-posta ve şifreyle giriş yapar.
+          {editingId
+            ? "Ad, iletişim, e-posta ve rolü güncelleyin. Şifre alanını boş bırakırsanız mevcut şifre korunur."
+            : "Yönetici veya saha teknisyeni hesabı açın; kullanıcı bu e-posta ve şifreyle giriş yapar."}
         </p>
         <form onSubmit={submit} className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
@@ -121,13 +164,14 @@ function SettingsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="u-pass">Şifre *</Label>
+            <Label htmlFor="u-pass">{editingId ? "Yeni Şifre" : "Şifre *"}</Label>
             <Input
               id="u-pass"
               type="password"
               value={form.password}
-              minLength={6}
-              required
+              minLength={editingId ? undefined : 6}
+              required={!editingId}
+              placeholder={editingId ? "Değiştirmek istemiyorsanız boş bırakın" : ""}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
           </div>
@@ -143,9 +187,24 @@ function SettingsPage() {
               <option value="admin">Yönetici</option>
             </select>
           </div>
-          <Button type="submit" className="sm:col-span-2" disabled={busy}>
-            <UserPlus className="mr-1 size-4" /> {busy ? "Oluşturuluyor…" : "Hesabı Oluştur"}
-          </Button>
+          <div className="flex gap-2 sm:col-span-2">
+            <Button type="submit" className="flex-1" disabled={busy}>
+              {editingId ? (
+                <>
+                  <Save className="mr-1 size-4" /> {busy ? "Kaydediliyor…" : "Değişiklikleri Kaydet"}
+                </>
+              ) : (
+                <>
+                  <UserPlus className="mr-1 size-4" /> {busy ? "Oluşturuluyor…" : "Hesabı Oluştur"}
+                </>
+              )}
+            </Button>
+            {editingId && (
+              <Button type="button" variant="outline" onClick={reset}>
+                İptal
+              </Button>
+            )}
+          </div>
         </form>
       </section>
 
@@ -162,12 +221,43 @@ function SettingsPage() {
               className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2"
             >
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold">{p.full_name || "İsimsiz"}</div>
+                <div className="truncate text-sm font-semibold">{p.fullName || "İsimsiz"}</div>
+                <div className="truncate text-xs lowercase text-muted-foreground">{p.email}</div>
                 <div className="truncate text-xs text-muted-foreground">{p.phone || "-"}</div>
               </div>
-              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold">
-                {p.role === "admin" ? "Yönetici" : "Teknisyen"}
-              </span>
+              <div className="flex shrink-0 items-center gap-1">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold">
+                  {p.role === "admin" ? "Yönetici" : "Teknisyen"}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    setEditingId(p.id);
+                    setForm({
+                      fullName: p.fullName,
+                      email: p.email,
+                      password: "",
+                      phone: p.phone,
+                      role: p.role,
+                    });
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                >
+                  Düzenle
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy || p.id === user?.id}
+                  aria-label={`${p.fullName} hesabını sil`}
+                  onClick={() => void removeAccount(p.id, p.fullName)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
             </div>
           ))}
           {(people.data ?? []).length === 0 && (
@@ -190,6 +280,7 @@ function SettingsPage() {
     </div>
   );
 }
+
 
 function ServiceTemplatesSection() {
   const qc = useQueryClient();
