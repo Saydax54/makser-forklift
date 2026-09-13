@@ -28,6 +28,8 @@ import { mergeServiceItems } from "@/lib/service-templates";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { nextServiceText } from "@/lib/maintenance";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
