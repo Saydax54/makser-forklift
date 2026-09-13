@@ -100,3 +100,12 @@ export function maintenanceSummary(m: MaintenanceMachine) {
 export function formatHours(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
+
+/** PDF ve ekranda gösterilecek "sonraki bakım" metni. */
+export function nextServiceText(m: MaintenanceMachine, currentHours: number | null) {
+  const intervalHours = Number(m.service_interval_hours ?? 250) || 250;
+  const intervalMonths = Number(m.service_interval_months ?? 3) || 3;
+  const base = currentHours ?? Number(m.hour_meter ?? 0);
+  const nextDate = addMonths(new Date(), intervalMonths);
+  return `${formatHours(base + intervalHours)} saat veya ${nextDate.toLocaleDateString("tr-TR")}`;
+}
