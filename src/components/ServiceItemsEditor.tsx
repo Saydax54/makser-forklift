@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
+import { formatTry, itemTotal, itemsTotal } from "@/lib/money";
 
 export type ServiceItem = { title: string; qty: string; unit: string; price?: string };
 
