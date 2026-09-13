@@ -59,27 +59,48 @@ export type Database = {
       forklifts: {
         Row: {
           brand: string
+          code: string
           created_at: string
           customer_id: string
+          fuel_type: string
+          hour_meter: number
           id: string
+          last_service_at: string | null
+          last_service_hours: number | null
           model: string
           serial_no: string
+          service_interval_hours: number
+          service_interval_months: number
         }
         Insert: {
           brand?: string
+          code?: string
           created_at?: string
           customer_id: string
+          fuel_type?: string
+          hour_meter?: number
           id?: string
+          last_service_at?: string | null
+          last_service_hours?: number | null
           model?: string
           serial_no?: string
+          service_interval_hours?: number
+          service_interval_months?: number
         }
         Update: {
           brand?: string
+          code?: string
           created_at?: string
           customer_id?: string
+          fuel_type?: string
+          hour_meter?: number
           id?: string
+          last_service_at?: string | null
+          last_service_hours?: number | null
           model?: string
           serial_no?: string
+          service_interval_hours?: number
+          service_interval_months?: number
         }
         Relationships: [
           {
@@ -198,6 +219,9 @@ export type Database = {
           customer_id: string
           fault_description: string
           forklift_id: string | null
+          form_approved: boolean
+          form_approved_at: string | null
+          hour_meter: number | null
           id: string
           service_items: Json
           service_note: string
@@ -214,6 +238,9 @@ export type Database = {
           customer_id: string
           fault_description: string
           forklift_id?: string | null
+          form_approved?: boolean
+          form_approved_at?: string | null
+          hour_meter?: number | null
           id?: string
           service_items?: Json
           service_note?: string
@@ -230,6 +257,9 @@ export type Database = {
           customer_id?: string
           fault_description?: string
           forklift_id?: string | null
+          form_approved?: boolean
+          form_approved_at?: string | null
+          hour_meter?: number | null
           id?: string
           service_items?: Json
           service_note?: string
