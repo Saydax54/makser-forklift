@@ -193,11 +193,22 @@ function OrderDetail() {
           signature_data: signature ?? o?.signature_data ?? null,
           signature_name: finalSigner,
           completed_at: completedAt,
+          hour_meter: hours,
         })
         .eq("id", id);
       if (error) throw error;
       if (o?.technician_id) {
         await supabase.from("technicians").update({ status: "available" }).eq("id", o.technician_id);
+      }
+      if (o?.forklift_id) {
+        await supabase
+          .from("forklifts")
+          .update({
+            hour_meter: hours ?? o.forklifts?.hour_meter ?? 0,
+            last_service_at: completedAt,
+            last_service_hours: hours ?? o.forklifts?.hour_meter ?? 0,
+          })
+          .eq("id", o.forklift_id);
       }
       await downloadPdf({ ...formData, completedAt, signerName: finalSigner });
       toast.success("İş kapatıldı, servis formu hazırlandı");
