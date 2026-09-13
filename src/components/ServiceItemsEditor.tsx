@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
 
-export type ServiceItem = { title: string; qty: string; unit: string };
+export type ServiceItem = { title: string; qty: string; unit: string; price?: string };
 
 export const UNITS = ["adet", "litre", "takım", "metre", "kg", "saat"];
 
@@ -16,6 +16,7 @@ export function parseServiceItems(value: unknown): ServiceItem[] {
       title: String(i["title"] ?? ""),
       qty: String(i["qty"] ?? ""),
       unit: String(i["unit"] ?? "adet"),
+      price: i["price"] === undefined || i["price"] === null ? "" : String(i["price"]),
     }))
     .filter((i) => i.title.trim().length > 0);
 }
@@ -28,9 +29,11 @@ export function formatServiceItem(i: ServiceItem) {
 export function ServiceItemsEditor({
   items,
   onChange,
+  withPrice = false,
 }: {
   items: ServiceItem[];
   onChange: (items: ServiceItem[]) => void;
+  withPrice?: boolean;
 }) {
   const [title, setTitle] = useState("");
   const [qty, setQty] = useState("1");
