@@ -64,8 +64,21 @@ type OrderRow = {
   completed_at: string | null;
   technician_id: string | null;
   service_items: unknown;
+  hour_meter: number | null;
+  forklift_id: string | null;
   customers: ServiceFormData["customer"] | null;
-  forklifts: { brand: string; model: string; serial_no: string } | null;
+  forklifts: {
+    id: string;
+    code: string;
+    brand: string;
+    model: string;
+    serial_no: string;
+    hour_meter: number | null;
+    last_service_at: string | null;
+    last_service_hours: number | null;
+    service_interval_hours: number | null;
+    service_interval_months: number | null;
+  } | null;
   technicians: { full_name: string } | null;
 };
 
