@@ -90,6 +90,7 @@ function OrderDetail() {
   const [items, setItems] = useState<ServiceItem[] | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const [signerName, setSignerName] = useState<string | null>(null);
+  const [hourMeter, setHourMeter] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const order = useQuery({
@@ -98,7 +99,7 @@ function OrderDetail() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, service_note, service_items, signature_data, signature_name, created_at, started_at, completed_at, technician_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(brand, model, serial_no), technicians(full_name)",
+          "id, fault_description, status, service_note, service_items, signature_data, signature_name, created_at, started_at, completed_at, technician_id, hour_meter, forklift_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(id, code, brand, model, serial_no, hour_meter, last_service_at, last_service_hours, service_interval_hours, service_interval_months), technicians(full_name)",
         )
         .eq("id", id)
         .single();
@@ -106,6 +107,9 @@ function OrderDetail() {
       const row = data as unknown as OrderRow;
       setNote((prev) => prev || row.service_note);
       setItems((prev) => prev ?? parseServiceItems(row.service_items));
+      setHourMeter((prev) =>
+        prev ?? String(row.hour_meter ?? row.forklifts?.hour_meter ?? ""),
+      );
       return row;
     },
   });
