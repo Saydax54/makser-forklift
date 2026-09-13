@@ -288,6 +288,27 @@ function OrderDetail() {
       {o.status === "in_progress" && canEdit && (
         <div className="space-y-4 rounded-xl border bg-card p-4 shadow-panel">
           <h2 className="font-display text-lg font-bold">Servis Formu</h2>
+          {o.forklift_id && (
+            <div className="space-y-1.5 rounded-lg border bg-background p-3">
+              <Label htmlFor="sayac">
+                Makine Çalışma Saati (Sayaç) {o.forklifts?.code ? `· ${o.forklifts.code}` : ""}
+              </Label>
+              <Input
+                id="sayac"
+                type="number"
+                inputMode="decimal"
+                value={hourMeter ?? ""}
+                onChange={(e) => setHourMeter(e.target.value)}
+                placeholder="Örn: 1250"
+              />
+              <p className="text-xs text-muted-foreground">
+                Sonraki periyodik bakım:{" "}
+                {o.forklifts
+                  ? nextServiceText(o.forklifts, Number((hourMeter ?? "").replace(",", ".")) || null)
+                  : "-"}
+              </p>
+            </div>
+          )}
           <div className="space-y-2">
             <Label>Yapılan İşlemler / Değişen Parçalar</Label>
             <ServiceTemplatePicker
