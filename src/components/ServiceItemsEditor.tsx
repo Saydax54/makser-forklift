@@ -94,6 +94,27 @@ export function ServiceItemsEditor({
                   </option>
                 ))}
               </select>
+              {withPrice && (
+                <span className="flex shrink-0 items-center gap-1">
+                  <Input
+                    aria-label={`${it.title} birim fiyatı`}
+                    value={it.price ?? ""}
+                    inputMode="decimal"
+                    maxLength={12}
+                    placeholder="Birim ₺"
+                    noUppercase
+                    onChange={(e) =>
+                      onChange(
+                        items.map((x, i) => (i === idx ? { ...x, price: e.target.value } : x)),
+                      )
+                    }
+                    className="h-8 w-20 px-2 text-right text-xs"
+                  />
+                  <span className="w-20 text-right text-xs font-bold">
+                    {itemTotal(it) ? formatTry(itemTotal(it)) : "—"}
+                  </span>
+                </span>
+              )}
               <button
                 type="button"
                 aria-label={`${it.title} maddesini sil`}
