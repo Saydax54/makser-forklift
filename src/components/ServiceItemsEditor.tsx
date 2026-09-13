@@ -57,11 +57,19 @@ export function ServiceItemsEditor({
         )}
         <ul className="divide-y">
           {items.map((it, idx) => (
-            <li key={`${it.title}-${idx}`} className="flex items-center gap-2 px-3 py-2">
+            <li key={`${it.title}-${idx}`} className="flex flex-wrap items-center gap-2 px-3 py-2">
               <span className="w-5 shrink-0 text-xs font-bold text-muted-foreground">
                 {idx + 1}.
               </span>
-              <span className="min-w-0 flex-1 text-sm font-semibold">{it.title}</span>
+              <Input
+                aria-label={`${it.title} açıklaması`}
+                value={it.title}
+                maxLength={120}
+                onChange={(e) =>
+                  onChange(items.map((x, i) => (i === idx ? { ...x, title: e.target.value } : x)))
+                }
+                className="h-8 min-w-[9rem] flex-1 px-2 text-xs font-semibold"
+              />
               <Input
                 aria-label={`${it.title} miktarı`}
                 value={it.qty}
