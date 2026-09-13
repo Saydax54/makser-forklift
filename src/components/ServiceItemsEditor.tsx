@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
+import { formatTry, itemTotal, itemsTotal } from "@/lib/money";
 
-export type ServiceItem = { title: string; qty: string; unit: string };
+export type ServiceItem = { title: string; qty: string; unit: string; price?: string };
 
 export const UNITS = ["adet", "litre", "takım", "metre", "kg", "saat"];
 
@@ -16,6 +17,7 @@ export function parseServiceItems(value: unknown): ServiceItem[] {
       title: String(i["title"] ?? ""),
       qty: String(i["qty"] ?? ""),
       unit: String(i["unit"] ?? "adet"),
+      price: i["price"] === undefined || i["price"] === null ? "" : String(i["price"]),
     }))
     .filter((i) => i.title.trim().length > 0);
 }
@@ -28,9 +30,11 @@ export function formatServiceItem(i: ServiceItem) {
 export function ServiceItemsEditor({
   items,
   onChange,
+  withPrice = false,
 }: {
   items: ServiceItem[];
   onChange: (items: ServiceItem[]) => void;
+  withPrice?: boolean;
 }) {
   const [title, setTitle] = useState("");
   const [qty, setQty] = useState("1");
@@ -54,11 +58,19 @@ export function ServiceItemsEditor({
         )}
         <ul className="divide-y">
           {items.map((it, idx) => (
-            <li key={`${it.title}-${idx}`} className="flex items-center gap-2 px-3 py-2">
+            <li key={`${it.title}-${idx}`} className="flex flex-wrap items-center gap-2 px-3 py-2">
               <span className="w-5 shrink-0 text-xs font-bold text-muted-foreground">
                 {idx + 1}.
               </span>
-              <span className="min-w-0 flex-1 text-sm font-semibold">{it.title}</span>
+              <Input
+                aria-label={`${it.title} açıklaması`}
+                value={it.title}
+                maxLength={120}
+                onChange={(e) =>
+                  onChange(items.map((x, i) => (i === idx ? { ...x, title: e.target.value } : x)))
+                }
+                className="h-8 min-w-[9rem] flex-1 px-2 text-xs font-semibold"
+              />
               <Input
                 aria-label={`${it.title} miktarı`}
                 value={it.qty}
@@ -83,6 +95,27 @@ export function ServiceItemsEditor({
                   </option>
                 ))}
               </select>
+              {withPrice && (
+                <span className="flex shrink-0 items-center gap-1">
+                  <Input
+                    aria-label={`${it.title} birim fiyatı`}
+                    value={it.price ?? ""}
+                    inputMode="decimal"
+                    maxLength={12}
+                    placeholder="Birim ₺"
+                    noUppercase
+                    onChange={(e) =>
+                      onChange(
+                        items.map((x, i) => (i === idx ? { ...x, price: e.target.value } : x)),
+                      )
+                    }
+                    className="h-8 w-20 px-2 text-right text-xs"
+                  />
+                  <span className="w-20 text-right text-xs font-bold">
+                    {itemTotal(it) ? formatTry(itemTotal(it)) : "—"}
+                  </span>
+                </span>
+              )}
               <button
                 type="button"
                 aria-label={`${it.title} maddesini sil`}
@@ -95,6 +128,16 @@ export function ServiceItemsEditor({
           ))}
 
         </ul>
+        {withPrice && items.length > 0 && (
+          <div className="flex items-center justify-between border-t bg-muted/40 px-3 py-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Toplam
+            </span>
+            <span className="font-display text-sm font-extrabold">
+              {formatTry(itemsTotal(items))}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-[1fr_4.5rem_6rem] gap-2">

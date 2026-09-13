@@ -16,6 +16,7 @@ import { Route as AuthenticatedAyarlarRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedGorevlerimRouteImport } from './routes/_authenticated/gorevlerim'
 import { Route as AuthenticatedMusterilerRouteImport } from './routes/_authenticated/musteriler'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
+import { Route as AuthenticatedServisFormlariRouteImport } from './routes/_authenticated/servis-formlari'
 import { Route as AuthenticatedTeknisyenlerRouteImport } from './routes/_authenticated/teknisyenler'
 import { Route as AuthenticatedIsIdRouteImport } from './routes/_authenticated/is.$id'
 
@@ -53,6 +54,12 @@ const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   path: '/panel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedServisFormlariRoute =
+  AuthenticatedServisFormlariRouteImport.update({
+    id: '/servis-formlari',
+    path: '/servis-formlari',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTeknisyenlerRoute =
   AuthenticatedTeknisyenlerRouteImport.update({
     id: '/teknisyenler',
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/gorevlerim': typeof AuthenticatedGorevlerimRoute
   '/musteriler': typeof AuthenticatedMusterilerRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/servis-formlari': typeof AuthenticatedServisFormlariRoute
   '/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
   '/is/$id': typeof AuthenticatedIsIdRoute
 }
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
   '/gorevlerim': typeof AuthenticatedGorevlerimRoute
   '/musteriler': typeof AuthenticatedMusterilerRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/servis-formlari': typeof AuthenticatedServisFormlariRoute
   '/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
   '/is/$id': typeof AuthenticatedIsIdRoute
 }
@@ -94,6 +103,7 @@ export interface FileRoutesById {
   '/_authenticated/gorevlerim': typeof AuthenticatedGorevlerimRoute
   '/_authenticated/musteriler': typeof AuthenticatedMusterilerRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/servis-formlari': typeof AuthenticatedServisFormlariRoute
   '/_authenticated/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
   '/_authenticated/is/$id': typeof AuthenticatedIsIdRoute
 }
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/gorevlerim'
     | '/musteriler'
     | '/panel'
+    | '/servis-formlari'
     | '/teknisyenler'
     | '/is/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/gorevlerim'
     | '/musteriler'
     | '/panel'
+    | '/servis-formlari'
     | '/teknisyenler'
     | '/is/$id'
   id:
@@ -127,6 +139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/gorevlerim'
     | '/_authenticated/musteriler'
     | '/_authenticated/panel'
+    | '/_authenticated/servis-formlari'
     | '/_authenticated/teknisyenler'
     | '/_authenticated/is/$id'
   fileRoutesById: FileRoutesById
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPanelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/servis-formlari': {
+      id: '/_authenticated/servis-formlari'
+      path: '/servis-formlari'
+      fullPath: '/servis-formlari'
+      preLoaderRoute: typeof AuthenticatedServisFormlariRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/teknisyenler': {
       id: '/_authenticated/teknisyenler'
       path: '/teknisyenler'
@@ -210,6 +230,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGorevlerimRoute: typeof AuthenticatedGorevlerimRoute
   AuthenticatedMusterilerRoute: typeof AuthenticatedMusterilerRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedServisFormlariRoute: typeof AuthenticatedServisFormlariRoute
   AuthenticatedTeknisyenlerRoute: typeof AuthenticatedTeknisyenlerRoute
   AuthenticatedIsIdRoute: typeof AuthenticatedIsIdRoute
 }
@@ -219,6 +240,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGorevlerimRoute: AuthenticatedGorevlerimRoute,
   AuthenticatedMusterilerRoute: AuthenticatedMusterilerRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedServisFormlariRoute: AuthenticatedServisFormlariRoute,
   AuthenticatedTeknisyenlerRoute: AuthenticatedTeknisyenlerRoute,
   AuthenticatedIsIdRoute: AuthenticatedIsIdRoute,
 }

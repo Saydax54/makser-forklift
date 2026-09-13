@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { maintenanceState, maintenanceSummary } from "@/lib/maintenance";
 import { STATUS_LABEL, STATUS_ORDER, formatDate, statusBadgeClass } from "@/lib/workshop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,9 +49,15 @@ type Technician = { id: string; full_name: string; phone: string; status: string
 type Forklift = {
   id: string;
   customer_id: string;
+  code: string;
   brand: string;
   model: string;
   serial_no: string;
+  hour_meter: number | null;
+  last_service_at: string | null;
+  last_service_hours: number | null;
+  service_interval_hours: number | null;
+  service_interval_months: number | null;
 };
 
 type Order = {
@@ -128,8 +135,10 @@ function Panel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("forklifts")
-        .select("id, customer_id, brand, model, serial_no")
-        .order("created_at");
+        .select(
+          "id, customer_id, code, brand, model, serial_no, hour_meter, last_service_at, last_service_hours, service_interval_hours, service_interval_months",
+        )
+        .order("code");
       if (error) throw error;
       return (data ?? []) as Forklift[];
     },
@@ -163,6 +172,11 @@ function Panel() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <MaintenanceReminders
+        forklifts={forklifts.data ?? []}
+        customers={customers.data ?? []}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         {STATUS_ORDER.map((status) => {
@@ -480,5 +494,52 @@ function NewOrderForm({
         {busy ? "Kaydediliyor…" : "İş Emrini Oluştur"}
       </Button>
     </form>
+  );
+}
+
+function MaintenanceReminders({
+  forklifts,
+  customers,
+}: {
+  forklifts: Forklift[];
+  customers: Customer[];
+}) {
+  const due = forklifts
+    .map((f) => ({ f, s: maintenanceState(f) }))
+    .filter((x) => x.s.overdue || x.s.soon)
+    .sort((a, b) => a.s.hoursLeft - b.s.hoursLeft);
+
+  if (due.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border bg-card p-4 shadow-panel">
+      <h2 className="font-display text-base font-bold">Periyodik Bakım Hatırlatmaları</h2>
+      <p className="text-xs text-muted-foreground">
+        Bakım aralığı makine kartından ayarlanır (varsayılan 250 saat veya 3 ay).
+      </p>
+      <ul className="mt-3 space-y-2">
+        {due.map(({ f, s }) => {
+          const c = customers.find((x) => x.id === f.customer_id);
+          return (
+            <li key={f.id} className="rounded-lg border bg-background p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md bg-steel px-1.5 py-0.5 font-mono text-[11px] font-bold text-steel-foreground">
+                  {f.code}
+                </span>
+                <span className="text-sm font-semibold">
+                  {c?.company_name || c?.name || "Müşteri yok"}
+                </span>
+                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${s.toneClass}`}>
+                  {s.label}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {[f.brand, f.model].filter(Boolean).join(" ")} · {maintenanceSummary(f)}
+              </p>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

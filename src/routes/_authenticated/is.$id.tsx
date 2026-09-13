@@ -28,6 +28,8 @@ import { mergeServiceItems } from "@/lib/service-templates";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { nextServiceText } from "@/lib/maintenance";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
@@ -64,8 +66,21 @@ type OrderRow = {
   completed_at: string | null;
   technician_id: string | null;
   service_items: unknown;
+  hour_meter: number | null;
+  forklift_id: string | null;
   customers: ServiceFormData["customer"] | null;
-  forklifts: { brand: string; model: string; serial_no: string } | null;
+  forklifts: {
+    id: string;
+    code: string;
+    brand: string;
+    model: string;
+    serial_no: string;
+    hour_meter: number | null;
+    last_service_at: string | null;
+    last_service_hours: number | null;
+    service_interval_hours: number | null;
+    service_interval_months: number | null;
+  } | null;
   technicians: { full_name: string } | null;
 };
 
@@ -77,6 +92,7 @@ function OrderDetail() {
   const [items, setItems] = useState<ServiceItem[] | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const [signerName, setSignerName] = useState<string | null>(null);
+  const [hourMeter, setHourMeter] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const order = useQuery({
@@ -85,7 +101,7 @@ function OrderDetail() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, service_note, service_items, signature_data, signature_name, created_at, started_at, completed_at, technician_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(brand, model, serial_no), technicians(full_name)",
+          "id, fault_description, status, service_note, service_items, signature_data, signature_name, created_at, started_at, completed_at, technician_id, hour_meter, forklift_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(id, code, brand, model, serial_no, hour_meter, last_service_at, last_service_hours, service_interval_hours, service_interval_months), technicians(full_name)",
         )
         .eq("id", id)
         .single();
@@ -93,6 +109,9 @@ function OrderDetail() {
       const row = data as unknown as OrderRow;
       setNote((prev) => prev || row.service_note);
       setItems((prev) => prev ?? parseServiceItems(row.service_items));
+      setHourMeter((prev) =>
+        prev ?? String(row.hour_meter ?? row.forklifts?.hour_meter ?? ""),
+      );
       return row;
     },
   });
@@ -119,6 +138,11 @@ function OrderDetail() {
       forklift_model: o.forklifts?.model || baseCustomer.forklift_model,
       serial_no: o.forklifts?.serial_no || baseCustomer.serial_no,
     },
+    machineCode: o.forklifts?.code ?? "",
+    hourMeter: hourMeter ?? o.hour_meter ?? "",
+    nextServiceInfo: o.forklifts
+      ? nextServiceText(o.forklifts, Number((hourMeter ?? "").replace(",", ".")) || null)
+      : "",
     technicianName: o.technicians?.full_name ?? "-",
     faultDescription: o.fault_description,
     serviceNote: note || o.service_note,
@@ -159,6 +183,11 @@ function OrderDetail() {
       toast.error("Müşteri imzası gerekli");
       return;
     }
+    const hours = Number((hourMeter ?? "").replace(",", ".")) || null;
+    if (o?.forklift_id && !hours) {
+      toast.error("Makinenin çalışma saatini (sayaç) girin");
+      return;
+    }
     setBusy(true);
     try {
       const completedAt = new Date().toISOString();
@@ -171,11 +200,22 @@ function OrderDetail() {
           signature_data: signature ?? o?.signature_data ?? null,
           signature_name: finalSigner,
           completed_at: completedAt,
+          hour_meter: hours,
         })
         .eq("id", id);
       if (error) throw error;
       if (o?.technician_id) {
         await supabase.from("technicians").update({ status: "available" }).eq("id", o.technician_id);
+      }
+      if (o?.forklift_id) {
+        await supabase
+          .from("forklifts")
+          .update({
+            hour_meter: hours ?? o.forklifts?.hour_meter ?? 0,
+            last_service_at: completedAt,
+            last_service_hours: hours ?? o.forklifts?.hour_meter ?? 0,
+          })
+          .eq("id", o.forklift_id);
       }
       await downloadPdf({ ...formData, completedAt, signerName: finalSigner });
       toast.success("İş kapatıldı, servis formu hazırlandı");
@@ -250,6 +290,27 @@ function OrderDetail() {
       {o.status === "in_progress" && canEdit && (
         <div className="space-y-4 rounded-xl border bg-card p-4 shadow-panel">
           <h2 className="font-display text-lg font-bold">Servis Formu</h2>
+          {o.forklift_id && (
+            <div className="space-y-1.5 rounded-lg border bg-background p-3">
+              <Label htmlFor="sayac">
+                Makine Çalışma Saati (Sayaç) {o.forklifts?.code ? `· ${o.forklifts.code}` : ""}
+              </Label>
+              <Input
+                id="sayac"
+                type="number"
+                inputMode="decimal"
+                value={hourMeter ?? ""}
+                onChange={(e) => setHourMeter(e.target.value)}
+                placeholder="Örn: 1250"
+              />
+              <p className="text-xs text-muted-foreground">
+                Sonraki periyodik bakım:{" "}
+                {o.forklifts
+                  ? nextServiceText(o.forklifts, Number((hourMeter ?? "").replace(",", ".")) || null)
+                  : "-"}
+              </p>
+            </div>
+          )}
           <div className="space-y-2">
             <Label>Yapılan İşlemler / Değişen Parçalar</Label>
             <ServiceTemplatePicker

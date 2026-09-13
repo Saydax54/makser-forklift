@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
 import { WORKSHOP, formatDate } from "./workshop";
+import { formatTry, itemTotal, itemsTotal, toNumber } from "./money";
 
 export type ServiceFormData = {
   orderNo: string;
@@ -15,14 +16,19 @@ export type ServiceFormData = {
     forklift_model: string;
     serial_no: string;
   };
+  machineCode?: string;
+  hourMeter?: string | number | null;
+  nextServiceInfo?: string;
   technicianName: string;
   faultDescription: string;
   serviceNote: string;
-  serviceItems?: { title: string; qty: string; unit: string }[];
+  serviceItems?: { title: string; qty: string; unit: string; price?: string }[];
   signatureData: string | null;
   signerName?: string;
   createdAt: string;
   completedAt: string | null;
+  /** true ise kalem fiyatları ve toplam tutar PDF'e yazılır. */
+  withPrices?: boolean;
 };
 
 function row(label: string, value: string) {
@@ -40,30 +46,53 @@ function escapeHtml(s: string) {
   );
 }
 
-function itemsTable(items: { title: string; qty: string; unit: string }[]) {
+type PdfItem = { title: string; qty: string; unit: string; price?: string };
+
+function itemsTable(items: PdfItem[], withPrices: boolean) {
+  const cell = "padding:6px 8px;border-bottom:1px solid #eceff3;font-size:13px";
   const rows = items.length
     ? items
         .map(
           (i, idx) => `<tr>
-            <td style="padding:6px 8px;border-bottom:1px solid #eceff3;font-size:12px;color:#6b7280;width:28px">${idx + 1}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #eceff3;font-size:13px">${escapeHtml(i.title)}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #eceff3;font-size:13px;text-align:right;white-space:nowrap">${escapeHtml([i.qty, i.unit].filter(Boolean).join(" "))}</td>
+            <td style="${cell};color:#6b7280;width:28px">${idx + 1}</td>
+            <td style="${cell}">${escapeHtml(i.title)}</td>
+            <td style="${cell};text-align:right;white-space:nowrap">${escapeHtml([i.qty, i.unit].filter(Boolean).join(" "))}</td>
+            ${
+              withPrices
+                ? `<td style="${cell};text-align:right;white-space:nowrap">${toNumber(i.price) ? escapeHtml(formatTry(toNumber(i.price))) : "-"}</td>
+                   <td style="${cell};text-align:right;white-space:nowrap;font-weight:700">${itemTotal(i) ? escapeHtml(formatTry(itemTotal(i))) : "-"}</td>`
+                : ""
+            }
           </tr>`,
         )
         .join("")
-    : `<tr><td colspan="3" style="padding:10px 8px;font-size:12px;color:#9ca3af">Madde girilmedi.</td></tr>`;
+    : `<tr><td colspan="${withPrices ? 5 : 3}" style="padding:10px 8px;font-size:12px;color:#9ca3af">Madde girilmedi.</td></tr>`;
+  const total =
+    withPrices && items.length
+      ? `<tr style="background:#f8fafc">
+           <td colspan="4" style="padding:8px;font-size:12px;font-weight:700;text-align:right">GENEL TOPLAM</td>
+           <td style="padding:8px;font-size:13px;font-weight:800;text-align:right;white-space:nowrap">${escapeHtml(formatTry(itemsTotal(items)))}</td>
+         </tr>`
+      : "";
   return `<div style="margin-top:14px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Yapılan İşlemler / Değişen Parçalar</div>
     <table style="width:100%;border-collapse:collapse;margin-top:6px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
       <thead><tr style="background:#f8fafc">
         <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:left">#</th>
         <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:left">İşlem / Parça</th>
         <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:right">Miktar</th>
+        ${
+          withPrices
+            ? `<th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:right">Birim Fiyat</th>
+               <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:right">Tutar</th>`
+            : ""
+        }
       </tr></thead>
-      <tbody>${rows}</tbody>
+      <tbody>${rows}${total}</tbody>
     </table>`;
 }
 
 function buildHtml(d: ServiceFormData) {
+  const withPrices = !!d.withPrices;
   return `
   <div style="width:794px;padding:44px;background:#ffffff;font-family:Manrope,Arial,Helvetica,sans-serif;color:#111827;box-sizing:border-box">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid #f0a13c;padding-bottom:16px">
@@ -73,7 +102,7 @@ function buildHtml(d: ServiceFormData) {
         <div style="font-size:12px;color:#6b7280;margin-top:2px">${WORKSHOP.address} · ${WORKSHOP.phone}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:15px;font-weight:700">TEKNİK SERVİS FORMU</div>
+        <div style="font-size:15px;font-weight:700">${withPrices ? "SERVİS FORMU (FİYATLI)" : "TEKNİK SERVİS FORMU"}</div>
         <div style="font-size:12px;color:#6b7280;margin-top:4px">Form No: ${escapeHtml(d.orderNo)}</div>
         <div style="font-size:12px;color:#6b7280">Tarih: ${escapeHtml(formatDate(d.completedAt ?? d.createdAt))}</div>
       </div>
@@ -86,17 +115,20 @@ function buildHtml(d: ServiceFormData) {
     ${row("E-posta", d.customer.email)}
     ${row("Adres", d.customer.address)}
 
-    <div style="margin-top:22px;font-size:13px;font-weight:700;color:#f0a13c;text-transform:uppercase;letter-spacing:.06em">Forklift Bilgileri</div>
+    <div style="margin-top:22px;font-size:13px;font-weight:700;color:#f0a13c;text-transform:uppercase;letter-spacing:.06em">Makine Bilgileri</div>
+    ${d.machineCode ? row("Makine Kimlik No", d.machineCode) : ""}
     ${row("Marka", d.customer.forklift_brand)}
     ${row("Model", d.customer.forklift_model)}
     ${row("Seri No", d.customer.serial_no)}
+    ${d.hourMeter ? row("Çalışma Saati", `${d.hourMeter} saat`) : ""}
+    ${d.nextServiceInfo ? row("Sonraki Periyodik Bakım", d.nextServiceInfo) : ""}
 
     <div style="margin-top:22px;font-size:13px;font-weight:700;color:#f0a13c;text-transform:uppercase;letter-spacing:.06em">Servis Detayı</div>
     ${row("Teknisyen", d.technicianName)}
     ${row("İş Emri Tarihi", formatDate(d.createdAt))}
     <div style="margin-top:12px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Arıza Tanımı</div>
     <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:52px">${escapeHtml(d.faultDescription)}</div>
-    ${itemsTable(d.serviceItems ?? [])}
+    ${itemsTable(d.serviceItems ?? [], withPrices)}
     <div style="margin-top:14px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Teknisyen Görüşü / Servis Notu</div>
     <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:60px">${escapeHtml(d.serviceNote)}</div>
 
@@ -145,8 +177,8 @@ export async function generateServicePdf(d: ServiceFormData): Promise<jsPDF> {
 }
 
 export function pdfFileName(d: ServiceFormData) {
-  const safe = d.customer.name.replace(/[^\p{L}\p{N}]+/gu, "-").slice(0, 40);
-  return `servis-formu-${safe}-${d.orderNo}.pdf`;
+  const safe = (d.customer.company_name || d.customer.name).replace(/[^\p{L}\p{N}]+/gu, "-").slice(0, 40);
+  return `${d.withPrices ? "servis-formu-fiyatli" : "servis-formu"}-${safe}-${d.orderNo}.pdf`;
 }
 
 export function whatsappLink(phone: string, message: string) {
