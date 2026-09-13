@@ -181,6 +181,11 @@ function OrderDetail() {
       toast.error("Müşteri imzası gerekli");
       return;
     }
+    const hours = Number((hourMeter ?? "").replace(",", ".")) || null;
+    if (o?.forklift_id && !hours) {
+      toast.error("Makinenin çalışma saatini (sayaç) girin");
+      return;
+    }
     setBusy(true);
     try {
       const completedAt = new Date().toISOString();
