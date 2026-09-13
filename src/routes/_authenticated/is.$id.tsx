@@ -136,6 +136,11 @@ function OrderDetail() {
       forklift_model: o.forklifts?.model || baseCustomer.forklift_model,
       serial_no: o.forklifts?.serial_no || baseCustomer.serial_no,
     },
+    machineCode: o.forklifts?.code ?? "",
+    hourMeter: hourMeter ?? o.hour_meter ?? "",
+    nextServiceInfo: o.forklifts
+      ? nextServiceText(o.forklifts, Number((hourMeter ?? "").replace(",", ".")) || null)
+      : "",
     technicianName: o.technicians?.full_name ?? "-",
     faultDescription: o.fault_description,
     serviceNote: note || o.service_note,
