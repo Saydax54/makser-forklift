@@ -128,6 +128,16 @@ export function ServiceItemsEditor({
           ))}
 
         </ul>
+        {withPrice && items.length > 0 && (
+          <div className="flex items-center justify-between border-t bg-muted/40 px-3 py-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Toplam
+            </span>
+            <span className="font-display text-sm font-extrabold">
+              {formatTry(itemsTotal(items))}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-[1fr_4.5rem_6rem] gap-2">
