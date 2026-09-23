@@ -17,7 +17,9 @@ export type PhotoRow = {
   forklift_id: string | null;
 };
 
-async function fetchPhotos(filter: { forkliftId?: string | null; workOrderId?: string | null }) {
+type PhotoFilter = { forkliftId?: string | null | undefined; workOrderId?: string | null | undefined };
+
+async function fetchPhotos(filter: PhotoFilter) {
   let q = supabase
     .from("forklift_photos")
     .select("id, storage_path, caption, created_at, work_order_id, forklift_id")
@@ -39,7 +41,7 @@ async function fetchPhotos(filter: { forkliftId?: string | null; workOrderId?: s
   return rows.map((r, i) => ({ ...r, url: signed?.[i]?.signedUrl ?? "" }));
 }
 
-export function usePhotos(filter: { forkliftId?: string | null; workOrderId?: string | null }) {
+export function usePhotos(filter: PhotoFilter) {
   return useQuery({
     queryKey: ["forklift-photos", filter.workOrderId ?? "", filter.forkliftId ?? ""],
     queryFn: () => fetchPhotos(filter),
