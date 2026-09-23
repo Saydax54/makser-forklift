@@ -31,8 +31,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { nextServiceText } from "@/lib/maintenance";
 import { Textarea } from "@/components/ui/textarea";
+import { ServicePhotos } from "@/components/ServicePhotos";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
+  ArrowLeftRight,
   Download,
   MessageCircle,
   Play,
@@ -65,6 +74,9 @@ type OrderRow = {
   started_at: string | null;
   completed_at: string | null;
   technician_id: string | null;
+  customer_id: string;
+  transfer_note: string | null;
+  transferred_at: string | null;
   service_items: unknown;
   hour_meter: number | null;
   forklift_id: string | null;
