@@ -293,10 +293,23 @@ function OrderDetail() {
         </div>
       </div>
 
-      {o.status === "pending" && canEdit && (
-        <Button className="w-full" size="lg" onClick={startJob} disabled={busy}>
-          <Play className="mr-2 size-4" /> İşe Başla
-        </Button>
+      {o.transferred_at && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+          <span className="font-bold">Bu iş devredildi.</span>{" "}
+          {o.transfer_note ? o.transfer_note : ""}{" "}
+          <span className="text-muted-foreground">({formatDate(o.transferred_at)})</span>
+        </div>
+      )}
+
+      {o.status !== "completed" && canEdit && (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          {o.status === "pending" && (
+            <Button className="flex-1" size="lg" onClick={startJob} disabled={busy}>
+              <Play className="mr-2 size-4" /> İşe Başla
+            </Button>
+          )}
+          <TransferDialog order={o} />
+        </div>
       )}
 
       {o.status === "in_progress" && canEdit && (
@@ -355,6 +368,14 @@ function OrderDetail() {
               onChange={setSignature}
             />
           </div>
+          <ServicePhotos
+            customerId={o.customer_id}
+            forkliftId={o.forklift_id}
+            workOrderId={o.id}
+            canUpload
+            canDelete
+            title="Servis Fotoğrafları (makine kartına kaydedilir)"
+          />
           <Button className="w-full" size="lg" onClick={complete} disabled={busy}>
             <Check className="mr-2 size-4" /> {busy ? "İşleniyor…" : "Onayla ve Kapat"}
           </Button>
@@ -399,6 +420,13 @@ function OrderDetail() {
               />
             </div>
           )}
+          <ServicePhotos
+            customerId={o.customer_id}
+            forkliftId={o.forklift_id}
+            workOrderId={o.id}
+            canUpload={canEdit}
+            canDelete={role === "admin"}
+          />
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button className="flex-1" onClick={() => void downloadPdf()}>
               <Download className="mr-2 size-4" /> Servis Formu PDF
@@ -421,6 +449,106 @@ function OrderDetail() {
 
       {role === "admin" && <AdminOrderEditor order={o} />}
     </div>
+  );
+}
+
+function TransferDialog({ order }: { order: OrderRow }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [targetId, setTargetId] = useState("");
+  const [reason, setReason] = useState("");
+
+  const technicians = useQuery({
+    queryKey: ["technicians"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("technicians")
+        .select("id, full_name, status")
+        .order("full_name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const options = (technicians.data ?? []).filter((t) => t.id !== order.technician_id);
+
+  async function transfer() {
+    if (!targetId) {
+      toast.error("Devredilecek teknisyeni seçin");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase
+      .from("work_orders")
+      .update({
+        technician_id: targetId,
+        transferred_from: order.technician_id,
+        transfer_note: reason.trim(),
+        transferred_at: new Date().toISOString(),
+      })
+      .eq("id", order.id);
+    if (!error) {
+      if (order.technician_id) {
+        await supabase.from("technicians").update({ status: "available" }).eq("id", order.technician_id);
+      }
+      await supabase.from("technicians").update({ status: "busy" }).eq("id", targetId);
+    }
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("İş emri devredildi");
+    setOpen(false);
+    void qc.invalidateQueries();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="flex-1" size="lg" variant="secondary">
+          <ArrowLeftRight className="mr-2 size-4" /> Servisi Devret
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Servisi Devret</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="devir-teknisyen">Yeni Teknisyen</Label>
+            <select
+              id="devir-teknisyen"
+              value={targetId}
+              onChange={(e) => setTargetId(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">Seçiniz…</option>
+              {options.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.full_name} {t.status === "available" ? "· Müsait" : "· Görevde"}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="devir-not">Devir Notu</Label>
+            <Textarea
+              id="devir-not"
+              rows={3}
+              value={reason}
+              maxLength={500}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Örn: PLAN DEĞİŞİKLİĞİ, BAŞKA SAHADA GÖREVLİYİM"
+            />
+          </div>
+          <Button className="w-full" onClick={() => void transfer()} disabled={busy}>
+            {busy ? "Devredriliyor…" : "Devret"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
