@@ -15,7 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Image as ImageIcon } from "lucide-react";
+import { ServicePhotos } from "@/components/ServicePhotos";
 
 export const Route = createFileRoute("/_authenticated/musteriler")({
   head: () => ({
@@ -441,6 +442,7 @@ function MachineRow({
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showPhotos, setShowPhotos] = useState(false);
   const [form, setForm] = useState({
     brand: machine.brand,
     model: machine.model,
@@ -621,6 +623,23 @@ function MachineRow({
             >
               <Trash2 className="size-4" />
             </Button>
+          </div>
+        )}
+      </div>
+      <div className="mt-3 border-t pt-3">
+        <Button size="sm" variant="ghost" onClick={() => setShowPhotos((v) => !v)}>
+          <ImageIcon className="mr-1 size-4" />
+          {showPhotos ? "Fotoğrafları Gizle" : "Servis Fotoğrafları"}
+        </Button>
+        {showPhotos && (
+          <div className="mt-2">
+            <ServicePhotos
+              customerId={machine.customer_id}
+              forkliftId={machine.id}
+              canUpload={isAdmin}
+              canDelete={isAdmin}
+              title={`${machine.code} · Servis Fotoğrafları`}
+            />
           </div>
         )}
       </div>

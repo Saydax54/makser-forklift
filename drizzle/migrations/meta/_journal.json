@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790180293672,
+      "tag": "0000_add_photos_transfer_invoice",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790180322596,
+      "tag": "0001_service_photo_storage_policies",
+      "breakpoints": true
+    }
+  ]
+}

@@ -56,6 +56,64 @@ export type Database = {
         }
         Relationships: []
       }
+      forklift_photos: {
+        Row: {
+          caption: string
+          created_at: string
+          customer_id: string
+          forklift_id: string | null
+          id: string
+          public_url: string
+          storage_path: string
+          uploaded_by: string | null
+          work_order_id: string | null
+        }
+        Insert: {
+          caption?: string
+          created_at?: string
+          customer_id: string
+          forklift_id?: string | null
+          id?: string
+          public_url?: string
+          storage_path: string
+          uploaded_by?: string | null
+          work_order_id?: string | null
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          customer_id?: string
+          forklift_id?: string | null
+          id?: string
+          public_url?: string
+          storage_path?: string
+          uploaded_by?: string | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forklift_photos_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forklift_photos_forklift_id_fkey"
+            columns: ["forklift_id"]
+            isOneToOne: false
+            referencedRelation: "forklifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forklift_photos_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forklifts: {
         Row: {
           brand: string
@@ -223,6 +281,10 @@ export type Database = {
           form_approved_at: string | null
           hour_meter: number | null
           id: string
+          invoice_no: string
+          invoice_note: string
+          invoice_status: string
+          invoiced_at: string | null
           service_items: Json
           service_note: string
           signature_data: string | null
@@ -230,6 +292,9 @@ export type Database = {
           started_at: string | null
           status: string
           technician_id: string | null
+          transfer_note: string
+          transferred_at: string | null
+          transferred_from: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -242,6 +307,10 @@ export type Database = {
           form_approved_at?: string | null
           hour_meter?: number | null
           id?: string
+          invoice_no?: string
+          invoice_note?: string
+          invoice_status?: string
+          invoiced_at?: string | null
           service_items?: Json
           service_note?: string
           signature_data?: string | null
@@ -249,6 +318,9 @@ export type Database = {
           started_at?: string | null
           status?: string
           technician_id?: string | null
+          transfer_note?: string
+          transferred_at?: string | null
+          transferred_from?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -261,6 +333,10 @@ export type Database = {
           form_approved_at?: string | null
           hour_meter?: number | null
           id?: string
+          invoice_no?: string
+          invoice_note?: string
+          invoice_status?: string
+          invoiced_at?: string | null
           service_items?: Json
           service_note?: string
           signature_data?: string | null
@@ -268,6 +344,9 @@ export type Database = {
           started_at?: string | null
           status?: string
           technician_id?: string | null
+          transfer_note?: string
+          transferred_at?: string | null
+          transferred_from?: string | null
         }
         Relationships: [
           {
@@ -287,6 +366,13 @@ export type Database = {
           {
             foreignKeyName: "work_orders_technician_id_fkey"
             columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_transferred_from_fkey"
+            columns: ["transferred_from"]
             isOneToOne: false
             referencedRelation: "technicians"
             referencedColumns: ["id"]

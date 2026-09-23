@@ -15,11 +15,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ? [
           { to: "/panel", label: "İş Emirleri" },
           { to: "/servis-formlari", label: "Servis Formları" },
+          { to: "/onayli-isler", label: "Onaylı İşler" },
           { to: "/musteriler", label: "Müşteriler" },
+          { to: "/periyodik-bakimlar", label: "Periyodik Bakımlar" },
           { to: "/teknisyenler", label: "Teknisyenler" },
           { to: "/ayarlar", label: "Ayarlar" },
         ]
-      : [{ to: "/gorevlerim", label: "Görevlerim" }];
+      : [
+          { to: "/gorevlerim", label: "Görevlerim" },
+          { to: "/periyodik-bakimlar", label: "Periyodik Bakımlar" },
+        ];
 
   async function signOut() {
     await supabase.auth.signOut();
