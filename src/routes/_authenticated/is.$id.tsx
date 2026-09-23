@@ -113,7 +113,7 @@ function OrderDetail() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, service_note, service_items, signature_data, signature_name, created_at, started_at, completed_at, technician_id, hour_meter, forklift_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(id, code, brand, model, serial_no, hour_meter, last_service_at, last_service_hours, service_interval_hours, service_interval_months), technicians(full_name)",
+          "id, fault_description, status, service_note, service_items, signature_data, signature_name, created_at, started_at, completed_at, technician_id, customer_id, transfer_note, transferred_at, hour_meter, forklift_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(id, code, brand, model, serial_no, hour_meter, last_service_at, last_service_hours, service_interval_hours, service_interval_months), technicians(full_name)",
         )
         .eq("id", id)
         .single();
