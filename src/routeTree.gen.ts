@@ -15,7 +15,9 @@ import { Route as GirisRouteImport } from './routes/giris'
 import { Route as AuthenticatedAyarlarRouteImport } from './routes/_authenticated/ayarlar'
 import { Route as AuthenticatedGorevlerimRouteImport } from './routes/_authenticated/gorevlerim'
 import { Route as AuthenticatedMusterilerRouteImport } from './routes/_authenticated/musteriler'
+import { Route as AuthenticatedOnayliIslerRouteImport } from './routes/_authenticated/onayli-isler'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
+import { Route as AuthenticatedPeriyodikBakimlarRouteImport } from './routes/_authenticated/periyodik-bakimlar'
 import { Route as AuthenticatedServisFormlariRouteImport } from './routes/_authenticated/servis-formlari'
 import { Route as AuthenticatedTeknisyenlerRouteImport } from './routes/_authenticated/teknisyenler'
 import { Route as AuthenticatedIsIdRouteImport } from './routes/_authenticated/is.$id'
@@ -49,11 +51,23 @@ const AuthenticatedMusterilerRoute = AuthenticatedMusterilerRouteImport.update({
   path: '/musteriler',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOnayliIslerRoute =
+  AuthenticatedOnayliIslerRouteImport.update({
+    id: '/onayli-isler',
+    path: '/onayli-isler',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   id: '/panel',
   path: '/panel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPeriyodikBakimlarRoute =
+  AuthenticatedPeriyodikBakimlarRouteImport.update({
+    id: '/periyodik-bakimlar',
+    path: '/periyodik-bakimlar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedServisFormlariRoute =
   AuthenticatedServisFormlariRouteImport.update({
     id: '/servis-formlari',
@@ -78,7 +92,9 @@ export interface FileRoutesByFullPath {
   '/ayarlar': typeof AuthenticatedAyarlarRoute
   '/gorevlerim': typeof AuthenticatedGorevlerimRoute
   '/musteriler': typeof AuthenticatedMusterilerRoute
+  '/onayli-isler': typeof AuthenticatedOnayliIslerRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/periyodik-bakimlar': typeof AuthenticatedPeriyodikBakimlarRoute
   '/servis-formlari': typeof AuthenticatedServisFormlariRoute
   '/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
   '/is/$id': typeof AuthenticatedIsIdRoute
@@ -89,7 +105,9 @@ export interface FileRoutesByTo {
   '/ayarlar': typeof AuthenticatedAyarlarRoute
   '/gorevlerim': typeof AuthenticatedGorevlerimRoute
   '/musteriler': typeof AuthenticatedMusterilerRoute
+  '/onayli-isler': typeof AuthenticatedOnayliIslerRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/periyodik-bakimlar': typeof AuthenticatedPeriyodikBakimlarRoute
   '/servis-formlari': typeof AuthenticatedServisFormlariRoute
   '/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
   '/is/$id': typeof AuthenticatedIsIdRoute
@@ -102,7 +120,9 @@ export interface FileRoutesById {
   '/_authenticated/ayarlar': typeof AuthenticatedAyarlarRoute
   '/_authenticated/gorevlerim': typeof AuthenticatedGorevlerimRoute
   '/_authenticated/musteriler': typeof AuthenticatedMusterilerRoute
+  '/_authenticated/onayli-isler': typeof AuthenticatedOnayliIslerRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/periyodik-bakimlar': typeof AuthenticatedPeriyodikBakimlarRoute
   '/_authenticated/servis-formlari': typeof AuthenticatedServisFormlariRoute
   '/_authenticated/teknisyenler': typeof AuthenticatedTeknisyenlerRoute
   '/_authenticated/is/$id': typeof AuthenticatedIsIdRoute
@@ -115,7 +135,9 @@ export interface FileRouteTypes {
     | '/ayarlar'
     | '/gorevlerim'
     | '/musteriler'
+    | '/onayli-isler'
     | '/panel'
+    | '/periyodik-bakimlar'
     | '/servis-formlari'
     | '/teknisyenler'
     | '/is/$id'
@@ -126,7 +148,9 @@ export interface FileRouteTypes {
     | '/ayarlar'
     | '/gorevlerim'
     | '/musteriler'
+    | '/onayli-isler'
     | '/panel'
+    | '/periyodik-bakimlar'
     | '/servis-formlari'
     | '/teknisyenler'
     | '/is/$id'
@@ -138,7 +162,9 @@ export interface FileRouteTypes {
     | '/_authenticated/ayarlar'
     | '/_authenticated/gorevlerim'
     | '/_authenticated/musteriler'
+    | '/_authenticated/onayli-isler'
     | '/_authenticated/panel'
+    | '/_authenticated/periyodik-bakimlar'
     | '/_authenticated/servis-formlari'
     | '/_authenticated/teknisyenler'
     | '/_authenticated/is/$id'
@@ -194,11 +220,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMusterilerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/onayli-isler': {
+      id: '/_authenticated/onayli-isler'
+      path: '/onayli-isler'
+      fullPath: '/onayli-isler'
+      preLoaderRoute: typeof AuthenticatedOnayliIslerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/panel': {
       id: '/_authenticated/panel'
       path: '/panel'
       fullPath: '/panel'
       preLoaderRoute: typeof AuthenticatedPanelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/periyodik-bakimlar': {
+      id: '/_authenticated/periyodik-bakimlar'
+      path: '/periyodik-bakimlar'
+      fullPath: '/periyodik-bakimlar'
+      preLoaderRoute: typeof AuthenticatedPeriyodikBakimlarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/servis-formlari': {
@@ -229,7 +269,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAyarlarRoute: typeof AuthenticatedAyarlarRoute
   AuthenticatedGorevlerimRoute: typeof AuthenticatedGorevlerimRoute
   AuthenticatedMusterilerRoute: typeof AuthenticatedMusterilerRoute
+  AuthenticatedOnayliIslerRoute: typeof AuthenticatedOnayliIslerRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedPeriyodikBakimlarRoute: typeof AuthenticatedPeriyodikBakimlarRoute
   AuthenticatedServisFormlariRoute: typeof AuthenticatedServisFormlariRoute
   AuthenticatedTeknisyenlerRoute: typeof AuthenticatedTeknisyenlerRoute
   AuthenticatedIsIdRoute: typeof AuthenticatedIsIdRoute
@@ -239,7 +281,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAyarlarRoute: AuthenticatedAyarlarRoute,
   AuthenticatedGorevlerimRoute: AuthenticatedGorevlerimRoute,
   AuthenticatedMusterilerRoute: AuthenticatedMusterilerRoute,
+  AuthenticatedOnayliIslerRoute: AuthenticatedOnayliIslerRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedPeriyodikBakimlarRoute: AuthenticatedPeriyodikBakimlarRoute,
   AuthenticatedServisFormlariRoute: AuthenticatedServisFormlariRoute,
   AuthenticatedTeknisyenlerRoute: AuthenticatedTeknisyenlerRoute,
   AuthenticatedIsIdRoute: AuthenticatedIsIdRoute,

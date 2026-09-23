@@ -544,7 +544,7 @@ function TransferDialog({ order }: { order: OrderRow }) {
             />
           </div>
           <Button className="w-full" onClick={() => void transfer()} disabled={busy}>
-            {busy ? "Devredriliyor…" : "Devret"}
+            {busy ? "Devrediliyor…" : "Devret"}
           </Button>
         </div>
       </DialogContent>
