@@ -31,123 +31,150 @@ export type ServiceFormData = {
   withPrices?: boolean;
 };
 
-function row(label: string, value: string) {
-  return `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #eceff3">
-      <div style="width:150px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.04em">${escapeHtml(label)}</div>
-      <div style="flex:1;color:#111827;font-size:13px">${escapeHtml(value || "-")}</div>
-    </div>`;
-}
-
 function escapeHtml(s: string) {
-  return String(s).replace(
+  return String(s ?? "").replace(
     /[&<>"']/g,
     (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
   );
 }
 
+const INK = "#0f172a";
+const MUTED = "#64748b";
+const LINE = "#e2e8f0";
+
+function field(label: string, value: string) {
+  return `<div style="padding:7px 0;border-bottom:1px dashed ${LINE}">
+    <div style="font-size:9px;color:${MUTED};text-transform:uppercase;letter-spacing:.12em;font-weight:700">${escapeHtml(label)}</div>
+    <div style="font-size:12.5px;color:${INK};margin-top:2px;font-weight:600">${escapeHtml(value || "-")}</div>
+  </div>`;
+}
+
+function card(title: string, body: string, accent: string) {
+  return `<div style="flex:1;border:1px solid ${LINE};border-radius:12px;padding:14px 16px;background:#fff">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="width:6px;height:6px;border-radius:2px;background:${accent}"></span>
+      <span style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${INK}">${escapeHtml(title)}</span>
+    </div>${body}</div>`;
+}
+
+function sectionTitle(t: string, accent: string) {
+  return `<div style="margin-top:20px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${INK}">${escapeHtml(t)}</span>
+    <span style="flex:1;height:1px;background:linear-gradient(90deg,${accent},transparent)"></span></div>`;
+}
+
 type PdfItem = { title: string; qty: string; unit: string; price?: string };
 
-function itemsTable(items: PdfItem[], withPrices: boolean) {
-  const cell = "padding:6px 8px;border-bottom:1px solid #eceff3;font-size:13px";
+function itemsTable(items: PdfItem[], withPrices: boolean, accent: string) {
+  const cell = `padding:8px 10px;border-bottom:1px solid ${LINE};font-size:12px;color:${INK}`;
+  const th = `padding:8px 10px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#fff;font-weight:700`;
   const rows = items.length
     ? items
         .map(
-          (i, idx) => `<tr>
-            <td style="${cell};color:#6b7280;width:28px">${idx + 1}</td>
-            <td style="${cell}">${escapeHtml(i.title)}</td>
+          (i, idx) => `<tr style="background:${idx % 2 ? "#f8fafc" : "#fff"}">
+            <td style="${cell};color:${MUTED};width:28px;font-weight:700">${String(idx + 1).padStart(2, "0")}</td>
+            <td style="${cell};font-weight:600">${escapeHtml(i.title)}</td>
             <td style="${cell};text-align:right;white-space:nowrap">${escapeHtml([i.qty, i.unit].filter(Boolean).join(" "))}</td>
             ${
               withPrices
                 ? `<td style="${cell};text-align:right;white-space:nowrap">${toNumber(i.price) ? escapeHtml(formatTry(toNumber(i.price))) : "-"}</td>
-                   <td style="${cell};text-align:right;white-space:nowrap;font-weight:700">${itemTotal(i) ? escapeHtml(formatTry(itemTotal(i))) : "-"}</td>`
+                   <td style="${cell};text-align:right;white-space:nowrap;font-weight:800">${itemTotal(i) ? escapeHtml(formatTry(itemTotal(i))) : "-"}</td>`
                 : ""
             }
           </tr>`,
         )
         .join("")
-    : `<tr><td colspan="${withPrices ? 5 : 3}" style="padding:10px 8px;font-size:12px;color:#9ca3af">Madde girilmedi.</td></tr>`;
+    : `<tr><td colspan="${withPrices ? 5 : 3}" style="padding:12px 10px;font-size:12px;color:#94a3b8">Madde girilmedi.</td></tr>`;
   const total =
     withPrices && items.length
-      ? `<tr style="background:#f8fafc">
-           <td colspan="4" style="padding:8px;font-size:12px;font-weight:700;text-align:right">GENEL TOPLAM</td>
-           <td style="padding:8px;font-size:13px;font-weight:800;text-align:right;white-space:nowrap">${escapeHtml(formatTry(itemsTotal(items)))}</td>
-         </tr>`
+      ? `<div style="display:flex;justify-content:flex-end;margin-top:10px">
+          <div style="background:${INK};color:#fff;border-radius:10px;padding:10px 16px;display:flex;gap:18px;align-items:center">
+            <span style="font-size:10px;letter-spacing:.16em;font-weight:700;opacity:.7">GENEL TOPLAM</span>
+            <span style="font-size:17px;font-weight:800;color:${accent}">${escapeHtml(formatTry(itemsTotal(items)))}</span>
+          </div></div>`
       : "";
-  return `<div style="margin-top:14px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Yapılan İşlemler / Değişen Parçalar</div>
-    <table style="width:100%;border-collapse:collapse;margin-top:6px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
-      <thead><tr style="background:#f8fafc">
-        <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:left">#</th>
-        <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:left">İşlem / Parça</th>
-        <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:right">Miktar</th>
-        ${
-          withPrices
-            ? `<th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:right">Birim Fiyat</th>
-               <th style="padding:6px 8px;font-size:10px;color:#6b7280;text-align:right">Tutar</th>`
-            : ""
-        }
+  return `<table style="width:100%;border-collapse:separate;border-spacing:0;margin-top:8px;border:1px solid ${LINE};border-radius:12px;overflow:hidden">
+      <thead><tr style="background:${INK}">
+        <th style="${th};text-align:left">#</th>
+        <th style="${th};text-align:left">İşlem / Parça</th>
+        <th style="${th};text-align:right">Miktar</th>
+        ${withPrices ? `<th style="${th};text-align:right">Birim Fiyat</th><th style="${th};text-align:right">Tutar</th>` : ""}
       </tr></thead>
-      <tbody>${rows}${total}</tbody>
-    </table>`;
+      <tbody>${rows}</tbody>
+    </table>${total}`;
+}
+
+function textBox(text: string, accent: string) {
+  return `<div style="margin-top:8px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:${INK};background:#f8fafc;border-left:3px solid ${accent};border-radius:8px;padding:12px 14px;min-height:40px">${escapeHtml(text || "-")}</div>`;
 }
 
 function buildHtml(d: ServiceFormData) {
+  const W = WORKSHOP;
+  const accent = W.accentColor || "#f0a13c";
   const withPrices = !!d.withPrices;
+  const company = d.customer.company_name || d.customer.name;
+  const contacts = [W.phone, W.email, W.website].filter(Boolean).map(escapeHtml).join(" &nbsp;·&nbsp; ");
+  const tax = [W.taxOffice && `V.D. ${W.taxOffice}`, W.taxNo && `V.N. ${W.taxNo}`].filter(Boolean).join(" · ");
   return `
-  <div style="width:794px;padding:44px;background:#ffffff;font-family:Manrope,Arial,Helvetica,sans-serif;color:#111827;box-sizing:border-box">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid #f0a13c;padding-bottom:16px">
-      <div>
-        <div style="font-size:26px;font-weight:800;letter-spacing:-.5px">${WORKSHOP.name}</div>
-        <div style="font-size:12px;color:#6b7280;margin-top:4px">${WORKSHOP.tagline}</div>
-        <div style="font-size:12px;color:#6b7280;margin-top:2px">${WORKSHOP.address} · ${WORKSHOP.phone}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:15px;font-weight:700">${withPrices ? "SERVİS FORMU (FİYATLI)" : "TEKNİK SERVİS FORMU"}</div>
-        <div style="font-size:12px;color:#6b7280;margin-top:4px">Form No: ${escapeHtml(d.orderNo)}</div>
-        <div style="font-size:12px;color:#6b7280">Tarih: ${escapeHtml(formatDate(d.completedAt ?? d.createdAt))}</div>
-      </div>
-    </div>
-
-    <div style="margin-top:22px;font-size:13px;font-weight:700;color:#f0a13c;text-transform:uppercase;letter-spacing:.06em">Müşteri Bilgileri</div>
-    ${row("Firma Ünvanı", d.customer.company_name || d.customer.name)}
-    ${row("Yetkili Kişi", d.customer.contact_person || d.customer.name)}
-    ${row("Telefon", d.customer.phone)}
-    ${row("E-posta", d.customer.email)}
-    ${row("Adres", d.customer.address)}
-
-    <div style="margin-top:22px;font-size:13px;font-weight:700;color:#f0a13c;text-transform:uppercase;letter-spacing:.06em">Makine Bilgileri</div>
-    ${d.machineCode ? row("Makine Kimlik No", d.machineCode) : ""}
-    ${row("Marka", d.customer.forklift_brand)}
-    ${row("Model", d.customer.forklift_model)}
-    ${row("Seri No", d.customer.serial_no)}
-    ${d.hourMeter ? row("Çalışma Saati", `${d.hourMeter} saat`) : ""}
-    ${d.nextServiceInfo ? row("Sonraki Periyodik Bakım", d.nextServiceInfo) : ""}
-
-    <div style="margin-top:22px;font-size:13px;font-weight:700;color:#f0a13c;text-transform:uppercase;letter-spacing:.06em">Servis Detayı</div>
-    ${row("Teknisyen", d.technicianName)}
-    ${row("İş Emri Tarihi", formatDate(d.createdAt))}
-    <div style="margin-top:12px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Arıza Tanımı</div>
-    <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:52px">${escapeHtml(d.faultDescription)}</div>
-    ${itemsTable(d.serviceItems ?? [], withPrices)}
-    <div style="margin-top:14px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em">Teknisyen Görüşü / Servis Notu</div>
-    <div style="margin-top:6px;font-size:13px;line-height:1.55;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:8px;padding:12px;min-height:60px">${escapeHtml(d.serviceNote)}</div>
-
-    <div style="margin-top:28px;display:flex;justify-content:space-between;align-items:flex-end">
-      <div style="font-size:11px;color:#6b7280;max-width:360px;line-height:1.5">
-        Yukarıda belirtilen işlemlerin tarafımıza eksiksiz yapıldığını ve cihazın çalışır durumda teslim alındığını beyan ederim.
-      </div>
-      <div style="text-align:center">
-        <div style="font-size:11px;color:#6b7280;margin-bottom:4px">Müşteri İmzası</div>
-        <div style="width:240px;height:110px;border:1px solid #e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff">
-          ${d.signatureData ? `<img src="${d.signatureData}" style="max-width:100%;max-height:100%" />` : ""}
+  <div style="width:794px;background:#fff;font-family:Manrope,Arial,Helvetica,sans-serif;color:${INK};box-sizing:border-box">
+    <div style="background:${INK};color:#fff;padding:30px 44px 26px;position:relative;overflow:hidden">
+      <div style="position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;border:28px solid ${accent};opacity:.18"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;position:relative">
+        <div style="display:flex;align-items:center;gap:14px">
+          ${W.logoUrl ? `<img src="${escapeHtml(W.logoUrl)}" crossorigin="anonymous" style="height:54px;max-width:140px;object-fit:contain;background:#fff;border-radius:8px;padding:4px" />` : `<div style="width:52px;height:52px;border-radius:12px;background:${accent};color:${INK};display:flex;align-items:center;justify-content:center;font-family:Archivo,Arial;font-weight:800;font-size:22px">${escapeHtml(W.name.slice(0, 1))}</div>`}
+          <div>
+            <div style="font-family:Archivo,Arial;font-size:24px;font-weight:800;letter-spacing:-.3px">${escapeHtml(W.name)}</div>
+            <div style="font-size:11px;opacity:.7;margin-top:2px">${escapeHtml(W.tagline)}</div>
+          </div>
         </div>
-        <div style="font-size:12px;margin-top:6px;font-weight:700">${escapeHtml(d.signerName || d.customer.contact_person || d.customer.name)}</div>
-        <div style="font-size:10px;color:#6b7280">${escapeHtml(d.customer.company_name || d.customer.name)}</div>
+        <div style="text-align:right">
+          <div style="display:inline-block;background:${accent};color:${INK};font-size:10px;font-weight:800;letter-spacing:.16em;padding:5px 10px;border-radius:999px">${escapeHtml(withPrices ? W.pricedFormTitle : W.formTitle)}</div>
+          <div style="font-family:Archivo,Arial;font-size:20px;font-weight:800;margin-top:8px">No ${escapeHtml(d.orderNo)}</div>
+          <div style="font-size:11px;opacity:.7">${escapeHtml(formatDate(d.completedAt ?? d.createdAt))}</div>
+        </div>
+      </div>
+    </div>
+    <div style="height:5px;background:linear-gradient(90deg,${accent},${accent}55)"></div>
+
+    <div style="padding:26px 44px 30px">
+      <div style="display:flex;gap:14px">
+        ${card("Müşteri", field("Firma Ünvanı", company) + field("Yetkili", d.customer.contact_person || d.customer.name) + field("Telefon", d.customer.phone) + field("Adres", d.customer.address), accent)}
+        ${card("Makine", (d.machineCode ? field("Kimlik No", d.machineCode) : "") + field("Marka / Model", [d.customer.forklift_brand, d.customer.forklift_model].filter(Boolean).join(" ")) + field("Seri No", d.customer.serial_no) + (d.hourMeter ? field("Çalışma Saati", `${d.hourMeter} saat`) : ""), accent)}
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:14px">
+        ${[["Teknisyen", d.technicianName], ["İş Emri", formatDate(d.createdAt)], ["Tamamlanma", formatDate(d.completedAt)], ...(d.nextServiceInfo ? [["Sonraki Bakım", d.nextServiceInfo]] : [])]
+          .map(([l, v]) => `<div style="flex:1;border:1px solid ${LINE};border-radius:10px;padding:9px 12px"><div style="font-size:9px;color:${MUTED};letter-spacing:.12em;text-transform:uppercase;font-weight:700">${escapeHtml(l)}</div><div style="font-size:12px;font-weight:700;margin-top:2px">${escapeHtml(v)}</div></div>`)
+          .join("")}
+      </div>
+
+      ${sectionTitle("Arıza Tanımı", accent)}
+      ${textBox(d.faultDescription, accent)}
+      ${sectionTitle("Yapılan İşlemler / Değişen Parçalar", accent)}
+      ${itemsTable(d.serviceItems ?? [], withPrices, accent)}
+      ${sectionTitle("Teknisyen Görüşü", accent)}
+      ${textBox(d.serviceNote, accent)}
+
+      <div style="margin-top:24px;display:flex;gap:16px;align-items:stretch">
+        <div style="flex:1;border:1px solid ${LINE};border-radius:12px;padding:14px 16px;font-size:11px;color:${MUTED};line-height:1.6">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${INK};margin-bottom:6px">Beyan</div>
+          ${escapeHtml(W.declaration)}
+        </div>
+        <div style="width:260px;border:1px solid ${LINE};border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:9px;color:${MUTED};letter-spacing:.12em;text-transform:uppercase;font-weight:700">Müşteri Onayı</div>
+          <div style="height:96px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-bottom:1px solid ${LINE}">
+            ${d.signatureData ? `<img src="${d.signatureData}" style="max-width:100%;max-height:100%" />` : ""}
+          </div>
+          <div style="font-size:12px;margin-top:6px;font-weight:800">${escapeHtml(d.signerName || d.customer.contact_person || d.customer.name)}</div>
+          <div style="font-size:10px;color:${MUTED}">${escapeHtml(company)}</div>
+        </div>
       </div>
     </div>
 
-    <div style="margin-top:32px;border-top:1px solid #e5e7eb;padding-top:10px;font-size:10px;color:#9ca3af;text-align:center">
-      ${WORKSHOP.name} · ${WORKSHOP.address} · ${WORKSHOP.phone}
+    <div style="background:#f8fafc;border-top:1px solid ${LINE};padding:14px 44px;display:flex;justify-content:space-between;gap:16px;font-size:10px;color:${MUTED}">
+      <div><b style="color:${INK}">${escapeHtml(W.name)}</b> · ${escapeHtml(W.address)}${tax ? ` · ${escapeHtml(tax)}` : ""}<br/>${contacts}</div>
+      <div style="text-align:right;max-width:240px;font-style:italic">${escapeHtml(W.footerNote)}</div>
     </div>
   </div>`;
 }
@@ -163,13 +190,19 @@ export async function generateServicePdf(d: ServiceFormData): Promise<jsPDF> {
   try {
     const canvas = await html2canvas(host.firstElementChild as HTMLElement, {
       scale: 2,
+      useCORS: true,
       backgroundColor: "#ffffff",
     });
     const img = canvas.toDataURL("image/jpeg", 0.92);
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
     const pageWidth = 210;
     const imgHeight = (canvas.height * pageWidth) / canvas.width;
-    pdf.addImage(img, "JPEG", 0, 0, pageWidth, Math.min(imgHeight, 297));
+    let y = 0;
+    pdf.addImage(img, "JPEG", 0, 0, pageWidth, imgHeight);
+    while (imgHeight - (y += 297) > 1) {
+      pdf.addPage();
+      pdf.addImage(img, "JPEG", 0, -y, pageWidth, imgHeight);
+    }
     return pdf;
   } finally {
     host.remove();
