@@ -11,7 +11,7 @@ import {
   listAccounts,
   updateAccount,
 } from "@/lib/admin.functions";
-import { WORKSHOP } from "@/lib/workshop";
+import { WORKSHOP, DEFAULT_WORKSHOP, applyWorkshopSettings, useWorkshop, type WorkshopSettings } from "@/lib/workshop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -266,17 +266,7 @@ function SettingsPage() {
         </div>
       </section>
 
-      <section className="rounded-xl border bg-card p-4 shadow-panel">
-        <h2 className="font-display text-base font-bold">Atölye Bilgileri</h2>
-        <dl className="mt-2 space-y-1 text-sm text-muted-foreground">
-          <div>{WORKSHOP.name}</div>
-          <div>{WORKSHOP.address}</div>
-          <div>{WORKSHOP.phone}</div>
-        </dl>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Bu bilgiler servis formu PDF'inin başlığında kullanılır.
-        </p>
-      </section>
+      <WorkshopSettingsSection />
     </div>
   );
 }
@@ -445,6 +435,81 @@ function ServiceTemplatesSection() {
               İptal
             </Button>
           )}
+        </div>
+      </form>
+    </section>
+  );
+}
+
+
+const SETTING_FIELDS: { key: keyof WorkshopSettings; label: string; group: string; type?: "text" | "textarea" | "number" | "color" | "email" }[] = [
+  { key: "name", label: "Atölye / Firma Adı", group: "Firma Bilgileri" },
+  { key: "tagline", label: "Slogan / Alt Başlık", group: "Firma Bilgileri" },
+  { key: "phone", label: "Telefon", group: "Firma Bilgileri" },
+  { key: "email", label: "E-posta", group: "Firma Bilgileri", type: "email" },
+  { key: "website", label: "Web Sitesi", group: "Firma Bilgileri" },
+  { key: "address", label: "Adres", group: "Firma Bilgileri", type: "textarea" },
+  { key: "taxOffice", label: "Vergi Dairesi", group: "Firma Bilgileri" },
+  { key: "taxNo", label: "Vergi No", group: "Firma Bilgileri" },
+  { key: "logoUrl", label: "Logo Adresi (https://…)", group: "Servis Formu" },
+  { key: "accentColor", label: "Vurgu Rengi", group: "Servis Formu", type: "color" },
+  { key: "formTitle", label: "Form Başlığı (fiyatsız)", group: "Servis Formu" },
+  { key: "pricedFormTitle", label: "Form Başlığı (fiyatlı)", group: "Servis Formu" },
+  { key: "declaration", label: "Müşteri Beyan Metni", group: "Servis Formu", type: "textarea" },
+  { key: "footerNote", label: "Alt Bilgi Notu", group: "Servis Formu", type: "textarea" },
+  { key: "whatsappTemplate", label: "WhatsApp Mesajı ({musteri}, {atolye}, {telefon})", group: "Mesajlar", type: "textarea" },
+  { key: "soonHours", label: "Yaklaşan bakım uyarısı (kalan saat)", group: "Periyodik Bakım", type: "number" },
+  { key: "soonDays", label: "Yaklaşan bakım uyarısı (kalan gün)", group: "Periyodik Bakım", type: "number" },
+];
+
+function WorkshopSettingsSection() {
+  const live = useWorkshop();
+  const [form, setForm] = useState<WorkshopSettings>({ ...live });
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setForm({ ...WORKSHOP }), [live.name, live.phone]);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const data = { ...form, soonHours: Number(form.soonHours), soonDays: Number(form.soonDays) };
+    const { error } = await supabase.from("app_settings").upsert({ id: 1, data, updated_at: new Date().toISOString() });
+    setBusy(false);
+    if (error) return void toast.error(error.message);
+    applyWorkshopSettings(data);
+    toast.success("Ayarlar kaydedildi");
+  }
+
+  const groups = Array.from(new Set(SETTING_FIELDS.map((f) => f.group)));
+  return (
+    <section className="rounded-xl border bg-card p-4 shadow-panel">
+      <h2 className="font-display text-base font-bold">Atölye & Servis Formu Ayarları</h2>
+      <p className="text-xs text-muted-foreground">Giriş ekranı, menü, PDF servis formu ve WhatsApp mesajlarında kullanılır.</p>
+      <form onSubmit={save} className="mt-3 space-y-5">
+        {groups.map((g) => (
+          <div key={g}>
+            <div className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">{g}</div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {SETTING_FIELDS.filter((f) => f.group === g).map((f) => {
+                const id = `ws-${f.key}`;
+                const val = String(form[f.key] ?? "");
+                const set = (v: string) => setForm((p) => ({ ...p, [f.key]: v }));
+                return (
+                  <div key={f.key} className={`space-y-1.5 ${f.type === "textarea" ? "sm:col-span-2" : ""}`}>
+                    <Label htmlFor={id}>{f.label}</Label>
+                    {f.type === "textarea" ? (
+                      <Textarea id={id} rows={2} value={val} onChange={(e) => set(e.target.value)} />
+                    ) : (
+                      <Input id={id} type={f.type === "number" ? "number" : f.type === "color" ? "color" : f.type === "email" ? "email" : f.key === "logoUrl" || f.key === "website" ? "url" : "text"} value={val} onChange={(e) => set(e.target.value)} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        <div className="flex gap-2">
+          <Button type="submit" disabled={busy}><Save className="mr-1 size-4" />{busy ? "Kaydediliyor…" : "Ayarları Kaydet"}</Button>
+          <Button type="button" variant="ghost" onClick={() => setForm({ ...DEFAULT_WORKSHOP })}>Varsayılana dön</Button>
         </div>
       </form>
     </section>
