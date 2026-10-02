@@ -145,7 +145,7 @@ function buildHtml(d: ServiceFormData) {
 
       <div style="display:flex;gap:10px;margin-top:14px">
         ${[["Teknisyen", d.technicianName], ["İş Emri", formatDate(d.createdAt)], ["Tamamlanma", formatDate(d.completedAt)], ...(d.nextServiceInfo ? [["Sonraki Bakım", d.nextServiceInfo]] : [])]
-          .map(([l, v]) => `<div style="flex:1;border:1px solid ${LINE};border-radius:10px;padding:9px 12px"><div style="font-size:9px;color:${MUTED};letter-spacing:.12em;text-transform:uppercase;font-weight:700">${escapeHtml(l)}</div><div style="font-size:12px;font-weight:700;margin-top:2px">${escapeHtml(v)}</div></div>`)
+          .map(([l, v]) => `<div style="flex:1;border:1px solid ${LINE};border-radius:10px;padding:9px 12px"><div style="font-size:9px;color:${MUTED};letter-spacing:.12em;text-transform:uppercase;font-weight:700">${escapeHtml(l ?? "")}</div><div style="font-size:12px;font-weight:700;margin-top:2px">${escapeHtml(v ?? "")}</div></div>`)
           .join("")}
       </div>
 
