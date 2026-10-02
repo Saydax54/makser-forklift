@@ -8,6 +8,7 @@ import {
   STATUS_LABEL,
   STATUS_ORDER,
   WORKSHOP,
+  whatsappMessage,
   formatDate,
   statusBadgeClass,
 } from "@/lib/workshop";
@@ -244,7 +245,7 @@ function OrderDetail() {
     pdf.save(pdfFileName(data));
   }
 
-  const waMessage = `Merhaba ${formData.customer.name}, ${WORKSHOP.name} servis ekibi olarak forkliftinize (${formData.customer.forklift_brand} ${formData.customer.forklift_model}) yaptığımız işlemler tamamlanmıştır. Teknik servis formunuz ektedir. İyi çalışmalar dileriz. ${WORKSHOP.phone}`;
+  const waMessage = whatsappMessage(formData.customer.company_name || formData.customer.name);
 
   const canEdit = role === "technician" || role === "admin";
 

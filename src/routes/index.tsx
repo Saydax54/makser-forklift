@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { WORKSHOP } from "@/lib/workshop";
+import { WORKSHOP, useWorkshop } from "@/lib/workshop";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, PenLine, FileText } from "lucide-react";
 

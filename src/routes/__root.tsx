@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { applyWorkshopSettings, type WorkshopSettings } from "@/lib/workshop";
 
 function NotFoundComponent() {
   return (
@@ -130,6 +132,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    void supabase
+      .from("app_settings")
+      .select("data")
+      .eq("id", 1)
+      .maybeSingle()
+      .then(({ data }) => applyWorkshopSettings(data?.data as Partial<WorkshopSettings>));
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { WORKSHOP, formatDate } from "@/lib/workshop";
+import { whatsappMessage, formatDate } from "@/lib/workshop";
 import { formatTry, itemsTotal } from "@/lib/money";
 import {
   generateServicePdf,
@@ -220,7 +220,7 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
   }
 
   const customerName = row.customers?.company_name || row.customers?.name || "-";
-  const waMessage = `Merhaba ${customerName}, ${WORKSHOP.name} servis ekibi olarak yaptığımız işlemler tamamlanmıştır. Servis formunuz ektedir. ${WORKSHOP.phone}`;
+  const waMessage = whatsappMessage(customerName);
 
   return (
     <div className="rounded-xl border bg-card p-4 shadow-panel">
