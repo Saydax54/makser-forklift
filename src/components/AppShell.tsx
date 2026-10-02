@@ -1,12 +1,13 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { WORKSHOP } from "@/lib/workshop";
+import { WORKSHOP, useWorkshop } from "@/lib/workshop";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { role, fullName } = useAuth();
+  useWorkshop();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 

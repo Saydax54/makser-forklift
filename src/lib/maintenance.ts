@@ -1,3 +1,4 @@
+import { WORKSHOP } from "./workshop";
 export type MaintenanceMachine = {
   hour_meter: number | null;
   last_service_at: string | null;
@@ -21,8 +22,6 @@ export type MaintenanceState = {
   toneClass: string;
 };
 
-const SOON_HOURS = 25;
-const SOON_DAYS = 15;
 
 export function addMonths(date: Date, months: number) {
   const d = new Date(date);
@@ -44,7 +43,7 @@ export function maintenanceState(m: MaintenanceMachine): MaintenanceState {
     : null;
 
   const overdue = hoursLeft <= 0 || (daysLeft !== null && daysLeft <= 0);
-  const soon = !overdue && (hoursLeft <= SOON_HOURS || (daysLeft !== null && daysLeft <= SOON_DAYS));
+  const soon = !overdue && (hoursLeft <= WORKSHOP.soonHours || (daysLeft !== null && daysLeft <= WORKSHOP.soonDays));
 
   let label: string;
   if (!m.last_service_at && !m.last_service_hours) {

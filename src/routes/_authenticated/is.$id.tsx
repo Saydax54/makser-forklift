@@ -7,7 +7,8 @@ import { useAuth } from "@/lib/auth";
 import {
   STATUS_LABEL,
   STATUS_ORDER,
-  WORKSHOP,
+
+  whatsappMessage,
   formatDate,
   statusBadgeClass,
 } from "@/lib/workshop";
@@ -113,7 +114,7 @@ function OrderDetail() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, service_note, service_items, signature_data, signature_name, created_at, started_at, completed_at, technician_id, customer_id, transfer_note, transferred_at, hour_meter, forklift_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(id, code, brand, model, serial_no, hour_meter, last_service_at, last_service_hours, service_interval_hours, service_interval_months), technicians(full_name)",
+          "id, fault_description, status, service_note, service_items, signature_data, signature_name, created_at, started_at, completed_at, technician_id, customer_id, transfer_note, transferred_at, hour_meter, forklift_id, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(id, code, brand, model, serial_no, hour_meter, last_service_at, last_service_hours, service_interval_hours, service_interval_months), technicians:technicians!work_orders_technician_id_fkey(full_name)",
         )
         .eq("id", id)
         .single();
@@ -244,7 +245,7 @@ function OrderDetail() {
     pdf.save(pdfFileName(data));
   }
 
-  const waMessage = `Merhaba ${formData.customer.name}, ${WORKSHOP.name} servis ekibi olarak forkliftinize (${formData.customer.forklift_brand} ${formData.customer.forklift_model}) yaptığımız işlemler tamamlanmıştır. Teknik servis formunuz ektedir. İyi çalışmalar dileriz. ${WORKSHOP.phone}`;
+  const waMessage = whatsappMessage(formData.customer.company_name || formData.customer.name);
 
   const canEdit = role === "technician" || role === "admin";
 

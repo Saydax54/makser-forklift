@@ -104,7 +104,7 @@ function Panel() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, status, created_at, completed_at, customers(name, company_name, contact_person, forklift_brand, forklift_model), technicians(full_name)",
+          "id, fault_description, status, created_at, completed_at, customers(name, company_name, contact_person, forklift_brand, forklift_model), technicians:technicians!work_orders_technician_id_fkey(full_name)",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;

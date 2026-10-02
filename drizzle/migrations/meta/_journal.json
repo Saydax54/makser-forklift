@@ -15,6 +15,13 @@
       "when": 1790180322596,
       "tag": "0001_service_photo_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790982646699,
+      "tag": "0002_app_settings",
+      "breakpoints": true
     }
   ]
 }

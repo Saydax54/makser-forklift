@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { WORKSHOP, formatDate } from "@/lib/workshop";
+import { whatsappMessage, formatDate } from "@/lib/workshop";
 import { formatTry, itemsTotal } from "@/lib/money";
 import {
   generateServicePdf,
@@ -76,7 +76,7 @@ function ServiceFormsPage() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, service_note, service_items, signature_data, signature_name, created_at, completed_at, hour_meter, form_approved, form_approved_at, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(code, brand, model, serial_no), technicians(full_name)",
+          "id, fault_description, service_note, service_items, signature_data, signature_name, created_at, completed_at, hour_meter, form_approved, form_approved_at, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(code, brand, model, serial_no), technicians:technicians!work_orders_technician_id_fkey(full_name)",
         )
         .eq("status", "completed")
         .order("completed_at", { ascending: false });
@@ -220,7 +220,7 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
   }
 
   const customerName = row.customers?.company_name || row.customers?.name || "-";
-  const waMessage = `Merhaba ${customerName}, ${WORKSHOP.name} servis ekibi olarak yaptığımız işlemler tamamlanmıştır. Servis formunuz ektedir. ${WORKSHOP.phone}`;
+  const waMessage = whatsappMessage(customerName);
 
   return (
     <div className="rounded-xl border bg-card p-4 shadow-panel">
