@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth";
 import {
   STATUS_LABEL,
   STATUS_ORDER,
-  WORKSHOP,
+
   whatsappMessage,
   formatDate,
   statusBadgeClass,

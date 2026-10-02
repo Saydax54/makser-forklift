@@ -25,6 +25,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  useWorkshop();
   const { session, role, loading } = useAuth();
   const navigate = useNavigate();
 

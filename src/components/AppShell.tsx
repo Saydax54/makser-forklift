@@ -7,6 +7,7 @@ import { LogOut } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { role, fullName } = useAuth();
+  useWorkshop();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 

@@ -28,6 +28,7 @@ export const Route = createFileRoute("/giris")({
 });
 
 function AuthPage() {
+  useWorkshop();
   const navigate = useNavigate();
   const { session, role, loading } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
