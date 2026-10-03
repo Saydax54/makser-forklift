@@ -196,13 +196,13 @@ export async function generateServicePdf(d: ServiceFormData): Promise<jsPDF> {
     const img = canvas.toDataURL("image/jpeg", 0.92);
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
     const pageWidth = 210;
-    const imgHeight = (canvas.height * pageWidth) / canvas.width;
-    let y = 0;
-    pdf.addImage(img, "JPEG", 0, 0, pageWidth, imgHeight);
-    while (imgHeight - (y += 297) > 1) {
-      pdf.addPage();
-      pdf.addImage(img, "JPEG", 0, -y, pageWidth, imgHeight);
-    }
+    const pageHeight = 297;
+    const fullHeight = (canvas.height * pageWidth) / canvas.width;
+    // Her şey tek sayfaya sığsın: uzun formlar orantılı küçültülüp ortalanır.
+    const scale = fullHeight > pageHeight ? pageHeight / fullHeight : 1;
+    const w = pageWidth * scale;
+    const h = fullHeight * scale;
+    pdf.addImage(img, "JPEG", (pageWidth - w) / 2, 0, w, h);
     return pdf;
   } finally {
     host.remove();
