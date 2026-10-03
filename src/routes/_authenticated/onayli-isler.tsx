@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/lib/workshop";
 import { formatTry, itemsTotal } from "@/lib/money";
 import { parseServiceItems } from "@/components/ServiceItemsEditor";
-import { generateServicePdf, pdfFileName, type ServiceFormData } from "@/lib/service-pdf";
+import { type ServiceFormData } from "@/lib/service-pdf";
+import { openPdfPreview } from "@/components/PdfPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { FileText, Receipt } from "lucide-react";
+import { FileText, Receipt, AlertTriangle, CircleCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/onayli-isler")({
   head: () => ({
@@ -53,6 +54,12 @@ type ApprovedRow = {
   invoice_no: string | null;
   invoiced_at: string | null;
   invoice_note: string | null;
+  quote_items: unknown;
+  quote_note: string;
+  quote_approved_by: string;
+  due_date: string | null;
+  payment_status: string;
+  paid_at: string | null;
   customers: {
     name: string;
     company_name: string;
@@ -72,6 +79,9 @@ const FILTERS = [
   { key: "all", label: "Tümü" },
   { key: "pending", label: "Fatura Bekliyor" },
   { key: "invoiced", label: "Faturalandı" },
+  { key: "unpaid", label: "Ödeme Bekliyor" },
+  { key: "overdue", label: "Geciken" },
+  { key: "paid", label: "Ödendi" },
 ] as const;
 
 function ApprovedJobsPage() {
@@ -84,9 +94,9 @@ function ApprovedJobsPage() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, service_note, service_items, signature_data, signature_name, created_at, completed_at, form_approved_at, hour_meter, invoice_status, invoice_no, invoiced_at, invoice_note, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(code, brand, model, serial_no), technicians:technicians!work_orders_technician_id_fkey(full_name)",
+          "id, fault_description, service_note, service_items, signature_data, signature_name, created_at, completed_at, form_approved_at, hour_meter, invoice_status, invoice_no, invoiced_at, invoice_note, quote_items, quote_note, quote_approved_by, due_date, payment_status, paid_at, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(code, brand, model, serial_no), technicians:technicians!work_orders_technician_id_fkey(full_name)",
         )
-        .eq("form_approved", true)
+        .eq("quote_status", "approved")
         .order("form_approved_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as ApprovedRow[];
@@ -96,7 +106,14 @@ function ApprovedJobsPage() {
   const all = rows.data ?? [];
   const q = search.trim().toLocaleLowerCase("tr-TR");
   const list = all
-    .filter((r) => (filter === "all" ? true : (r.invoice_status || "pending") === filter))
+    .filter((r) => {
+      if (filter === "all") return true;
+      if (filter === "pending") return r.invoice_status !== "invoiced";
+      if (filter === "invoiced") return r.invoice_status === "invoiced";
+      if (filter === "paid") return r.payment_status === "paid";
+      if (filter === "unpaid") return r.invoice_status === "invoiced" && r.payment_status !== "paid";
+      return isOverdue(r);
+    })
     .filter((r) =>
       !q
         ? true
@@ -113,10 +130,12 @@ function ApprovedJobsPage() {
             .includes(q),
     );
 
-  const totalAll = all.reduce((s, r) => s + itemsTotal(parseServiceItems(r.service_items)), 0);
+  const totalAll = all.reduce((s, r) => s + itemsTotal(parseServiceItems(r.quote_items)), 0);
   const totalInvoiced = all
     .filter((r) => r.invoice_status === "invoiced")
-    .reduce((s, r) => s + itemsTotal(parseServiceItems(r.service_items)), 0);
+    .reduce((s, r) => s + itemsTotal(parseServiceItems(r.quote_items)), 0);
+
+  const overdue = all.filter(isOverdue);
 
   return (
     <div className="space-y-4">
@@ -132,6 +151,17 @@ function ApprovedJobsPage() {
         <Stat label="Onaylı tutar" value={formatTry(totalAll)} />
         <Stat label="Faturalanan" value={formatTry(totalInvoiced)} />
       </div>
+
+      {overdue.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setFilter("overdue")}
+          className="flex w-full items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-left text-sm font-semibold text-destructive"
+        >
+          <AlertTriangle className="size-4 shrink-0" />
+          {overdue.length} faturanın vadesi geçti · {formatTry(overdue.reduce((s, r) => s + itemsTotal(parseServiceItems(r.quote_items)), 0))} tahsil edilmedi
+        </button>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
         {FILTERS.map((f) => (
@@ -156,7 +186,7 @@ function ApprovedJobsPage() {
         <p className="text-sm text-muted-foreground">Yükleniyor…</p>
       ) : list.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Kayıt bulunamadı. Servis Formları sayfasından formu "Kabul et" ile onayladığınızda iş
+          Kayıt bulunamadı. Servis Formları sayfasında teklif oluşturup "Teklif Onaylandı" dediğinizde iş
           buraya düşer.
         </p>
       ) : (
@@ -168,6 +198,23 @@ function ApprovedJobsPage() {
       )}
     </div>
   );
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function isOverdue(r: ApprovedRow) {
+  return r.invoice_status === "invoiced" && r.payment_status !== "paid" && !!r.due_date && r.due_date < todayStr();
+}
+
+function daysBetween(a: string, b: string) {
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+}
+
+function formatDay(v: string) {
+  return new Date(`${v}T12:00:00`).toLocaleDateString("tr-TR");
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -188,52 +235,58 @@ function ApprovedCard({ row }: { row: ApprovedRow }) {
     row.invoiced_at ? row.invoiced_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
   );
   const [invoiceNote, setInvoiceNote] = useState(row.invoice_note ?? "");
+  const [dueDate, setDueDate] = useState(row.due_date ?? "");
 
-  const items = parseServiceItems(row.service_items);
+  const items = parseServiceItems(row.quote_items);
+  const paid = row.payment_status === "paid";
+  const overdue = isOverdue(row);
+  const daysLeft = row.due_date ? daysBetween(todayStr(), row.due_date) : null;
   const total = itemsTotal(items);
   const invoiced = row.invoice_status === "invoiced";
 
-  async function downloadPdf() {
+  function previewPdf() {
+    const base = row.customers ?? {
+      name: "-", company_name: "", contact_person: "", phone: "", email: "", address: "",
+      forklift_brand: "", forklift_model: "", serial_no: "",
+    };
+    const data: ServiceFormData = {
+      orderNo: row.id.slice(0, 8).toUpperCase(),
+      customer: {
+        ...base,
+        forklift_brand: row.forklifts?.brand || base.forklift_brand,
+        forklift_model: row.forklifts?.model || base.forklift_model,
+        serial_no: row.forklifts?.serial_no || base.serial_no,
+      },
+      machineCode: row.forklifts?.code ?? "",
+      hourMeter: row.hour_meter ?? "",
+      technicianName: row.technicians?.full_name ?? "-",
+      faultDescription: row.fault_description,
+      serviceNote: row.service_note,
+      serviceItems: items,
+      signatureData: null,
+      signerName: row.signature_name,
+      createdAt: row.created_at,
+      completedAt: row.completed_at,
+      withPrices: true,
+      kind: "quote",
+      quoteNote: row.quote_note,
+    };
+    openPdfPreview(data);
+  }
+
+  async function setPaid(next: boolean) {
     setBusy(true);
-    try {
-      const base = row.customers ?? {
-        name: "-",
-        company_name: "",
-        contact_person: "",
-        phone: "",
-        email: "",
-        address: "",
-        forklift_brand: "",
-        forklift_model: "",
-        serial_no: "",
-      };
-      const data: ServiceFormData = {
-        orderNo: row.id.slice(0, 8).toUpperCase(),
-        customer: {
-          ...base,
-          forklift_brand: row.forklifts?.brand || base.forklift_brand,
-          forklift_model: row.forklifts?.model || base.forklift_model,
-          serial_no: row.forklifts?.serial_no || base.serial_no,
-        },
-        machineCode: row.forklifts?.code ?? "",
-        hourMeter: row.hour_meter ?? "",
-        technicianName: row.technicians?.full_name ?? "-",
-        faultDescription: row.fault_description,
-        serviceNote: row.service_note,
-        serviceItems: items,
-        signatureData: row.signature_data,
-        signerName: row.signature_name,
-        createdAt: row.created_at,
-        completedAt: row.completed_at,
-        withPrices: true,
-      };
-      const pdf = await generateServicePdf(data);
-      pdf.save(pdfFileName(data));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "PDF oluşturulamadı");
-    } finally {
-      setBusy(false);
+    const { error } = await supabase
+      .from("work_orders")
+      .update({ payment_status: next ? "paid" : "pending", paid_at: next ? new Date().toISOString() : null })
+      .eq("id", row.id);
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
     }
+    toast.success(next ? "Ödeme alındı olarak işaretlendi" : "Ödeme bekliyor olarak işaretlendi");
+    void qc.invalidateQueries({ queryKey: ["approved-jobs"] });
   }
 
   async function save(e: React.FormEvent) {
@@ -246,6 +299,7 @@ function ApprovedCard({ row }: { row: ApprovedRow }) {
         invoice_no: invoiceNo.trim(),
         invoiced_at: new Date(`${invoicedAt}T12:00:00`).toISOString(),
         invoice_note: invoiceNote.trim(),
+        due_date: dueDate || null,
       })
       .eq("id", row.id);
     setBusy(false);
@@ -262,7 +316,7 @@ function ApprovedCard({ row }: { row: ApprovedRow }) {
     setBusy(true);
     const { error } = await supabase
       .from("work_orders")
-      .update({ invoice_status: "pending", invoiced_at: null })
+      .update({ invoice_status: "pending", invoiced_at: null, payment_status: "pending", paid_at: null })
       .eq("id", row.id);
     setBusy(false);
     if (error) {
@@ -314,11 +368,39 @@ function ApprovedCard({ row }: { row: ApprovedRow }) {
               {row.invoice_note ? ` · ${row.invoice_note}` : ""}
             </div>
           )}
+          {invoiced && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+              <span
+                className={`rounded-full border px-2 py-0.5 font-bold ${
+                  paid
+                    ? "border-success/30 bg-success/15 text-success-foreground"
+                    : overdue
+                      ? "border-destructive/40 bg-destructive/10 text-destructive"
+                      : "border-warning/40 bg-warning/20 text-warning-foreground"
+                }`}
+              >
+                {paid ? "Ödendi" : overdue ? "Ödeme gecikti" : "Ödeme bekliyor"}
+              </span>
+              {row.due_date && (
+                <span className={overdue ? "font-bold text-destructive" : "text-muted-foreground"}>
+                  Vade: {formatDay(row.due_date)}
+                  {!paid && daysLeft !== null &&
+                    (daysLeft < 0 ? ` · ${-daysLeft} gün gecikti` : daysLeft === 0 ? " · bugün" : ` · ${daysLeft} gün kaldı`)}
+                </span>
+              )}
+              {paid && row.paid_at && <span className="text-muted-foreground">Ödeme: {formatDate(row.paid_at)}</span>}
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void downloadPdf()}>
-            <FileText className="mr-1 size-3.5" /> Fiyatlı PDF
+          <Button size="sm" variant="secondary" onClick={previewPdf}>
+            <FileText className="mr-1 size-3.5" /> Teklif PDF
           </Button>
+          {invoiced && (
+            <Button size="sm" variant={paid ? "ghost" : "default"} disabled={busy} onClick={() => void setPaid(!paid)}>
+              <CircleCheck className="mr-1 size-3.5" /> {paid ? "Ödemeyi geri al" : "Ödendi"}
+            </Button>
+          )}
           <Button size="sm" variant="ghost" asChild>
             <Link to="/is/$id" params={{ id: row.id }}>
               İş emri
@@ -357,6 +439,15 @@ function ApprovedCard({ row }: { row: ApprovedRow }) {
                     type="date"
                     value={invoicedAt}
                     onChange={(e) => setInvoicedAt(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor={`invdue-${row.id}`}>Vade Tarihi (varsa)</Label>
+                  <Input
+                    id={`invdue-${row.id}`}
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1.5">
