@@ -293,6 +293,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_id: string
+          due_date: string | null
           fault_description: string
           forklift_id: string | null
           form_approved: boolean
@@ -303,6 +304,14 @@ export type Database = {
           invoice_note: string
           invoice_status: string
           invoiced_at: string | null
+          paid_at: string | null
+          payment_status: string
+          quote_approved_at: string | null
+          quote_approved_by: string
+          quote_created_at: string | null
+          quote_items: Json
+          quote_note: string
+          quote_status: string
           service_items: Json
           service_note: string
           signature_data: string | null
@@ -319,6 +328,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id: string
+          due_date?: string | null
           fault_description: string
           forklift_id?: string | null
           form_approved?: boolean
@@ -329,6 +339,14 @@ export type Database = {
           invoice_note?: string
           invoice_status?: string
           invoiced_at?: string | null
+          paid_at?: string | null
+          payment_status?: string
+          quote_approved_at?: string | null
+          quote_approved_by?: string
+          quote_created_at?: string | null
+          quote_items?: Json
+          quote_note?: string
+          quote_status?: string
           service_items?: Json
           service_note?: string
           signature_data?: string | null
@@ -345,6 +363,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id?: string
+          due_date?: string | null
           fault_description?: string
           forklift_id?: string | null
           form_approved?: boolean
@@ -355,6 +374,14 @@ export type Database = {
           invoice_note?: string
           invoice_status?: string
           invoiced_at?: string | null
+          paid_at?: string | null
+          payment_status?: string
+          quote_approved_at?: string | null
+          quote_approved_by?: string
+          quote_created_at?: string | null
+          quote_items?: Json
+          quote_note?: string
+          quote_status?: string
           service_items?: Json
           service_note?: string
           signature_data?: string | null
