@@ -4,14 +4,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { whatsappMessage, formatDate } from "@/lib/workshop";
+import { formatDate } from "@/lib/workshop";
 import { formatTry, itemsTotal } from "@/lib/money";
-import {
-  generateServicePdf,
-  pdfFileName,
-  whatsappLink,
-  type ServiceFormData,
-} from "@/lib/service-pdf";
+import { type ServiceFormData } from "@/lib/service-pdf";
+import { openPdfPreview } from "@/components/PdfPreview";
 import {
   ServiceItemsEditor,
   parseServiceItems,
@@ -28,7 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Download, MessageCircle, Pencil, Check, FileText } from "lucide-react";
+import { Download, Pencil, Check, FileText, Undo2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/servis-formlari")({
   head: () => ({
@@ -60,6 +56,11 @@ type FormRow = {
   hour_meter: number | null;
   form_approved: boolean;
   form_approved_at: string | null;
+  quote_items: unknown;
+  quote_status: string;
+  quote_note: string;
+  quote_approved_by: string;
+  quote_approved_at: string | null;
   customers: ServiceFormData["customer"] | null;
   forklifts: { code: string; brand: string; model: string; serial_no: string } | null;
   technicians: { full_name: string } | null;
@@ -76,7 +77,7 @@ function ServiceFormsPage() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, service_note, service_items, signature_data, signature_name, created_at, completed_at, hour_meter, form_approved, form_approved_at, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(code, brand, model, serial_no), technicians:technicians!work_orders_technician_id_fkey(full_name)",
+          "id, fault_description, service_note, service_items, signature_data, signature_name, created_at, completed_at, hour_meter, form_approved, form_approved_at, quote_items, quote_status, quote_note, quote_approved_by, quote_approved_at, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(code, brand, model, serial_no), technicians:technicians!work_orders_technician_id_fkey(full_name)",
         )
         .eq("status", "completed")
         .order("completed_at", { ascending: false });
@@ -97,7 +98,7 @@ function ServiceFormsPage() {
       <div>
         <h1 className="font-display text-xl font-extrabold">Servis Formları</h1>
         <p className="text-sm text-muted-foreground">
-          Tamamlanan tüm işlerin servis formları. {isAdmin ? "Metinleri düzeltebilir, kalemleri fiyatlandırabilir ve iki ayrı PDF üretebilirsiniz." : "Formları görüntüleyip PDF alabilirsiniz."}
+          Tamamlanan tüm işlerin servis formları. {isAdmin ? "Servis formu müşteri imzasıyla kapanır. Fiyatlandırma için ayrı, imzasız bir teklif oluşturun; teklif onaylanınca iş Onaylı İşler sayfasına geçer." : "Formları görüntüleyip PDF alabilirsiniz."}
         </p>
       </div>
 
@@ -121,7 +122,7 @@ function ServiceFormsPage() {
   );
 }
 
-function buildFormData(row: FormRow, items: ServiceItem[], note: string, withPrices: boolean) {
+function buildFormData(row: FormRow, items: ServiceItem[], kind: "service" | "quote") {
   const base =
     row.customers ?? {
       name: "-",
@@ -144,83 +145,102 @@ function buildFormData(row: FormRow, items: ServiceItem[], note: string, withPri
     hourMeter: row.hour_meter ?? "",
     technicianName: row.technicians?.full_name ?? "-",
     faultDescription: row.fault_description,
-    serviceNote: note,
+    serviceNote: row.service_note,
     serviceItems: items,
-    signatureData: row.signature_data,
+    signatureData: kind === "quote" ? null : row.signature_data,
     signerName: row.signature_name,
     createdAt: row.created_at,
     completedAt: row.completed_at,
-    withPrices,
+    withPrices: kind === "quote",
+    kind,
+    quoteNote: row.quote_note,
   } satisfies ServiceFormData;
 }
 
+const QUOTE_BADGE: Record<string, [string, string]> = {
+  none: ["Teklif yok", "border-border bg-muted text-muted-foreground"],
+  draft: ["Teklif hazır · onay bekliyor", "border-warning/40 bg-warning/20 text-warning-foreground"],
+  approved: ["Teklif onaylandı", "border-success/30 bg-success/15 text-success-foreground"],
+};
+
 function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
+  const [approveOpen, setApproveOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [fault, setFault] = useState(row.fault_description);
   const [note, setNote] = useState(row.service_note);
-  const [items, setItems] = useState<ServiceItem[]>(parseServiceItems(row.service_items));
+  const serviceItems = parseServiceItems(row.service_items);
+  const [items, setItems] = useState<ServiceItem[]>(
+    serviceItems.map(({ price: _p, ...rest }) => rest),
+  );
+  const savedQuote = parseServiceItems(row.quote_items);
+  const [quoteItems, setQuoteItems] = useState<ServiceItem[]>(
+    savedQuote.length ? savedQuote : serviceItems,
+  );
+  const [quoteNote, setQuoteNote] = useState(row.quote_note ?? "");
+  const [approver, setApprover] = useState(row.quote_approved_by || row.customers?.contact_person || "");
 
-  const savedItems = parseServiceItems(row.service_items);
-  const total = itemsTotal(savedItems);
+  const status = row.quote_status || "none";
+  const total = itemsTotal(savedQuote);
 
-  async function download(withPrices: boolean) {
-    setBusy(true);
-    try {
-      const data = buildFormData(row, savedItems, row.service_note, withPrices);
-      const pdf = await generateServicePdf(data);
-      pdf.save(pdfFileName(data));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "PDF oluşturulamadı");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    const { error } = await supabase
-      .from("work_orders")
-      .update({
-        fault_description: fault.trim(),
-        service_note: note.trim(),
-        service_items: items,
-      })
-      .eq("id", row.id);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Servis formu güncellendi");
-    setOpen(false);
+  function refresh() {
     void qc.invalidateQueries({ queryKey: ["service-forms"] });
+    void qc.invalidateQueries({ queryKey: ["approved-jobs"] });
     void qc.invalidateQueries({ queryKey: ["order", row.id] });
   }
 
-  async function toggleApproved() {
+  async function update(patch: Record<string, unknown>, msg: string) {
     setBusy(true);
-    const next = !row.form_approved;
-    const { error } = await supabase
-      .from("work_orders")
-      .update({
-        form_approved: next,
-        form_approved_at: next ? new Date().toISOString() : null,
-      })
-      .eq("id", row.id);
+    const { error } = await supabase.from("work_orders").update(patch).eq("id", row.id);
     setBusy(false);
     if (error) {
       toast.error(error.message);
-      return;
+      return false;
     }
-    toast.success(next ? "Form kabul edildi" : "Form kabulü geri alındı");
-    void qc.invalidateQueries({ queryKey: ["service-forms"] });
+    toast.success(msg);
+    refresh();
+    return true;
+  }
+
+  async function saveForm(e: React.FormEvent) {
+    e.preventDefault();
+    if (await update({ fault_description: fault.trim(), service_note: note.trim(), service_items: items }, "Servis formu güncellendi"))
+      setEditOpen(false);
+  }
+
+  async function saveQuote(e: React.FormEvent) {
+    e.preventDefault();
+    const ok = await update(
+      {
+        quote_items: quoteItems,
+        quote_note: quoteNote.trim(),
+        quote_status: status === "approved" ? "approved" : "draft",
+        quote_created_at: new Date().toISOString(),
+      },
+      "Teklif kaydedildi",
+    );
+    if (ok) {
+      setQuoteOpen(false);
+      openPdfPreview(buildFormData({ ...row, quote_note: quoteNote.trim() }, quoteItems, "quote"));
+    }
+  }
+
+  async function approve(e: React.FormEvent) {
+    e.preventDefault();
+    const now = new Date().toISOString();
+    if (
+      await update(
+        { quote_status: "approved", quote_approved_by: approver.trim(), quote_approved_at: now, form_approved: true, form_approved_at: now },
+        "Teklif onaylandı, iş Onaylı İşler sayfasına geçti",
+      )
+    )
+      setApproveOpen(false);
   }
 
   const customerName = row.customers?.company_name || row.customers?.name || "-";
-  const waMessage = whatsappMessage(customerName);
+  const [badge, badgeClass] = QUOTE_BADGE[status] ?? QUOTE_BADGE.none;
 
   return (
     <div className="rounded-xl border bg-card p-4 shadow-panel">
@@ -235,107 +255,121 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
                 {row.forklifts.code}
               </span>
             )}
-            <span
-              className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${
-                row.form_approved
-                  ? "border-success/30 bg-success/15 text-success-foreground"
-                  : "border-border bg-muted text-muted-foreground"
-              }`}
-            >
-              {row.form_approved ? "Kabul edildi" : "Onay bekliyor"}
-            </span>
+            {row.signature_data && (
+              <span className="rounded-full border border-success/30 bg-success/15 px-2 py-0.5 text-[10px] font-bold text-success-foreground">
+                İmzalı
+              </span>
+            )}
+            {isAdmin && (
+              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${badgeClass}`}>{badge}</span>
+            )}
           </div>
           <div className="mt-1 font-display text-base font-bold">{customerName}</div>
           <div className="text-sm text-muted-foreground">
-            {formatDate(row.completed_at ?? row.created_at)} ·{" "}
-            {row.technicians?.full_name ?? "Teknisyen yok"} ·{" "}
-            {savedItems.length} kalem
+            {formatDate(row.completed_at ?? row.created_at)} · {row.technicians?.full_name ?? "Teknisyen yok"} ·{" "}
+            {serviceItems.length} kalem
             {row.hour_meter ? ` · ${row.hour_meter} sa` : ""}
           </div>
-          {total > 0 && (
-            <div className="mt-1 font-display text-sm font-extrabold">
-              Toplam: {formatTry(total)}
+          {isAdmin && total > 0 && (
+            <div className="mt-1 font-display text-sm font-extrabold">Teklif: {formatTry(total)}</div>
+          )}
+          {status === "approved" && row.quote_approved_by && (
+            <div className="text-xs text-muted-foreground">
+              Onaylayan: {row.quote_approved_by} · {formatDate(row.quote_approved_at)}
             </div>
           )}
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void download(false)}>
-            <Download className="mr-1 size-3.5" /> Fiyatsız PDF
+          <Button size="sm" variant="secondary" onClick={() => openPdfPreview(buildFormData(row, serviceItems, "service"))}>
+            <Download className="mr-1 size-3.5" /> Servis Formu PDF
           </Button>
-          {isAdmin && (
-            <Button size="sm" variant="secondary" disabled={busy} onClick={() => void download(true)}>
-              <FileText className="mr-1 size-3.5" /> Fiyatlı PDF
-            </Button>
-          )}
-          {row.customers?.phone && (
-            <Button size="sm" variant="secondary" asChild>
-              <a
-                href={whatsappLink(row.customers.phone, waMessage)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <MessageCircle className="mr-1 size-3.5" /> WhatsApp
-              </a>
-            </Button>
-          )}
           <Button size="sm" variant="ghost" asChild>
-            <Link to="/is/$id" params={{ id: row.id }}>
-              İş emri
-            </Link>
+            <Link to="/is/$id" params={{ id: row.id }}>İş emri</Link>
           </Button>
           {isAdmin && (
             <>
-              <Button size="sm" variant={row.form_approved ? "ghost" : "default"} disabled={busy} onClick={() => void toggleApproved()}>
-                <Check className="mr-1 size-3.5" />
-                {row.form_approved ? "Kabulü geri al" : "Kabul et"}
-              </Button>
-              <Dialog open={open} onOpenChange={setOpen}>
+              <Dialog open={editOpen} onOpenChange={setEditOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Pencil className="mr-1 size-3.5" /> Düzenle & Fiyatla
-                  </Button>
+                  <Button size="sm" variant="ghost"><Pencil className="mr-1 size-3.5" /> Formu Düzelt</Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>
-                      Servis Formu · #{row.id.slice(0, 8).toUpperCase()}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={save} className="space-y-4">
+                  <DialogHeader><DialogTitle>Servis Formu · #{row.id.slice(0, 8).toUpperCase()}</DialogTitle></DialogHeader>
+                  <form onSubmit={saveForm} className="space-y-4">
                     <div className="space-y-1.5">
                       <Label htmlFor={`f-${row.id}-fault`}>Arıza Tanımı</Label>
-                      <Textarea
-                        id={`f-${row.id}-fault`}
-                        rows={3}
-                        maxLength={2000}
-                        value={fault}
-                        onChange={(e) => setFault(e.target.value)}
-                      />
+                      <Textarea id={`f-${row.id}-fault`} rows={3} maxLength={2000} value={fault} onChange={(e) => setFault(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label>Yapılan İşlemler / Değişen Parçalar (fiyatlı)</Label>
-                      <ServiceItemsEditor items={items} onChange={setItems} withPrice />
-                      <p className="text-xs text-muted-foreground">
-                        Fiyatlar yalnızca fiyatlı PDF çıktısında görünür; müşteriye giden fiyatsız
-                        formda yer almaz.
-                      </p>
+                      <Label>Yapılan İşlemler / Değişen Parçalar</Label>
+                      <ServiceItemsEditor items={items} onChange={setItems} />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor={`f-${row.id}-note`}>Teknisyen Görüşü / Servis Notu</Label>
-                      <Textarea
-                        id={`f-${row.id}-note`}
-                        rows={4}
-                        maxLength={2000}
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                      />
+                      <Textarea id={`f-${row.id}-note`} rows={4} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
                     </div>
-                    <Button type="submit" className="w-full" disabled={busy}>
-                      {busy ? "Kaydediliyor…" : "Değişiklikleri Kaydet"}
-                    </Button>
+                    <Button type="submit" className="w-full" disabled={busy}>{busy ? "Kaydediliyor…" : "Değişiklikleri Kaydet"}</Button>
                   </form>
                 </DialogContent>
               </Dialog>
+
+              {status !== "none" && (
+                <Button size="sm" variant="secondary" onClick={() => openPdfPreview(buildFormData(row, savedQuote, "quote"))}>
+                  <FileText className="mr-1 size-3.5" /> Teklif PDF
+                </Button>
+              )}
+
+              <Dialog open={quoteOpen} onOpenChange={setQuoteOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant={status === "none" ? "default" : "secondary"}>
+                    <FileText className="mr-1 size-3.5" /> {status === "none" ? "Teklif Oluştur" : "Teklifi Düzenle"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+                  <DialogHeader><DialogTitle>Fiyat Teklifi · T-{row.id.slice(0, 8).toUpperCase()}</DialogTitle></DialogHeader>
+                  <form onSubmit={saveQuote} className="space-y-4">
+                    <p className="text-xs text-muted-foreground">
+                      Kalemler servis formundan aktarıldı. Fiyatları girin; teklif imzasız ayrı bir belge olarak oluşturulur, servis formu değişmez.
+                    </p>
+                    <ServiceItemsEditor items={quoteItems} onChange={setQuoteItems} withPrice />
+                    <div className="flex justify-between rounded-lg bg-muted px-3 py-2 font-display text-sm font-extrabold">
+                      <span>Genel Toplam</span><span>{formatTry(itemsTotal(quoteItems))}</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`q-${row.id}-note`}>Teklif Notu (opsiyonel)</Label>
+                      <Textarea id={`q-${row.id}-note`} rows={3} maxLength={1000} value={quoteNote} onChange={(e) => setQuoteNote(e.target.value)} placeholder="ÖRN: FİYATLARA KDV DAHİL DEĞİLDİR" />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={busy}>{busy ? "Kaydediliyor…" : "Teklifi Kaydet ve Önizle"}</Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              {status === "draft" && (
+                <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm"><Check className="mr-1 size-3.5" /> Teklif Onaylandı</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader><DialogTitle>Teklif Onayı</DialogTitle></DialogHeader>
+                    <form onSubmit={approve} className="space-y-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`a-${row.id}`}>Onaylayan Kişi</Label>
+                        <Input id={`a-${row.id}`} required maxLength={80} value={approver} onChange={(e) => setApprover(e.target.value)} />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={busy}>Onayı Kaydet</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              )}
+              {status === "approved" && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void update({ quote_status: "draft", quote_approved_at: null, form_approved: false, form_approved_at: null }, "Teklif onayı geri alındı")}
+                >
+                  <Undo2 className="mr-1 size-3.5" /> Onayı geri al
+                </Button>
+              )}
             </>
           )}
         </div>

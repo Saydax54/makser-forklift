@@ -12,9 +12,8 @@ import {
   formatDate,
   statusBadgeClass,
 } from "@/lib/workshop";
+import { openPdfPreview } from "@/components/PdfPreview";
 import {
-  generateServicePdf,
-  pdfFileName,
   whatsappLink,
   type ServiceFormData,
 } from "@/lib/service-pdf";
@@ -241,8 +240,7 @@ function OrderDetail() {
   }
 
   async function downloadPdf(data: ServiceFormData = formData) {
-    const pdf = await generateServicePdf(data);
-    pdf.save(pdfFileName(data));
+    openPdfPreview(data);
   }
 
   const waMessage = whatsappMessage(formData.customer.company_name || formData.customer.name);
@@ -443,7 +441,7 @@ function OrderDetail() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            PDF cihazınıza indirilir; WhatsApp penceresinde mesajın yanına ekleyebilirsiniz.
+            Form önce önizlemede açılır; oradan yazdırabilir, indirebilir veya gönderebilirsiniz.
           </p>
         </div>
       )}
