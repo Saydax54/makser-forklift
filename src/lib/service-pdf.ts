@@ -29,6 +29,8 @@ export type ServiceFormData = {
   completedAt: string | null;
   /** true ise kalem fiyatları ve toplam tutar PDF'e yazılır. */
   withPrices?: boolean;
+  kind?: "service" | "quote";
+  quoteNote?: string;
 };
 
 function escapeHtml(s: string) {
@@ -112,7 +114,8 @@ function textBox(text: string, accent: string) {
 function buildHtml(d: ServiceFormData) {
   const W = WORKSHOP;
   const accent = W.accentColor || "#f0a13c";
-  const withPrices = !!d.withPrices;
+  const isQuote = d.kind === "quote";
+  const withPrices = isQuote || !!d.withPrices;
   const company = d.customer.company_name || d.customer.name;
   const contacts = [W.phone, W.email, W.website].filter(Boolean).map(escapeHtml).join(" &nbsp;·&nbsp; ");
   const tax = [W.taxOffice && `V.D. ${W.taxOffice}`, W.taxNo && `V.N. ${W.taxNo}`].filter(Boolean).join(" · ");
@@ -129,9 +132,9 @@ function buildHtml(d: ServiceFormData) {
           </div>
         </div>
         <div style="text-align:right">
-          <div style="display:inline-block;background:${accent};color:${INK};font-size:10px;font-weight:800;letter-spacing:.16em;padding:5px 10px;border-radius:999px">${escapeHtml(withPrices ? W.pricedFormTitle : W.formTitle)}</div>
-          <div style="font-family:Archivo,Arial;font-size:20px;font-weight:800;margin-top:8px">No ${escapeHtml(d.orderNo)}</div>
-          <div style="font-size:11px;opacity:.7">${escapeHtml(formatDate(d.completedAt ?? d.createdAt))}</div>
+          <div style="display:inline-block;background:${accent};color:${INK};font-size:10px;font-weight:800;letter-spacing:.16em;padding:5px 10px;border-radius:999px">${escapeHtml(isQuote ? "FİYAT TEKLİFİ" : withPrices ? W.pricedFormTitle : W.formTitle)}</div>
+          <div style="font-family:Archivo,Arial;font-size:20px;font-weight:800;margin-top:8px">${isQuote ? "Teklif No T-" : "No "}${escapeHtml(d.orderNo)}</div>
+          <div style="font-size:11px;opacity:.7">${escapeHtml(formatDate(isQuote ? new Date().toISOString() : (d.completedAt ?? d.createdAt)))}</div>
         </div>
       </div>
     </div>
@@ -153,20 +156,19 @@ function buildHtml(d: ServiceFormData) {
       ${textBox(d.faultDescription, accent)}
       ${sectionTitle("Yapılan İşlemler / Değişen Parçalar", accent)}
       ${itemsTable(d.serviceItems ?? [], withPrices, accent)}
-      ${sectionTitle("Teknisyen Görüşü", accent)}
-      ${textBox(d.serviceNote, accent)}
+      ${isQuote ? (d.quoteNote ? sectionTitle("Teklif Notu", accent) + textBox(d.quoteNote, accent) : "") : sectionTitle("Teknisyen Görüşü", accent) + textBox(d.serviceNote, accent)}
 
       <div style="margin-top:14px;display:flex;gap:16px;align-items:stretch">
         <div style="flex:1;border:1px solid ${LINE};border-radius:12px;padding:14px 16px;font-size:11px;color:${MUTED};line-height:1.6">
-          <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${INK};margin-bottom:6px">Beyan</div>
-          ${escapeHtml(W.declaration)}
+          <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${INK};margin-bottom:6px">${isQuote ? "Teklif Koşulları" : "Beyan"}</div>
+          ${escapeHtml(isQuote ? "Bu teklif, servis formunda kayıt altına alınan işlemler esas alınarak hazırlanmıştır. Onayınızın ardından faturalandırma yapılacaktır." : W.declaration)}
         </div>
         <div style="width:260px;border:1px solid ${LINE};border-radius:12px;padding:12px;text-align:center">
-          <div style="font-size:9px;color:${MUTED};letter-spacing:.12em;text-transform:uppercase;font-weight:700">Müşteri Onayı</div>
+          <div style="font-size:9px;color:${MUTED};letter-spacing:.12em;text-transform:uppercase;font-weight:700">${isQuote ? "Teklifi Onaylayan" : "Müşteri Onayı"}</div>
           <div style="height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-bottom:1px solid ${LINE}">
-            ${d.signatureData ? `<img src="${d.signatureData}" style="max-width:100%;max-height:100%" />` : ""}
+            ${!isQuote && d.signatureData ? `<img src="${d.signatureData}" style="max-width:100%;max-height:100%" />` : ""}
           </div>
-          <div style="font-size:12px;margin-top:6px;font-weight:800">${escapeHtml(d.signerName || d.customer.contact_person || d.customer.name)}</div>
+          <div style="font-size:12px;margin-top:6px;font-weight:800">${isQuote ? "Ad Soyad / İmza / Kaşe" : escapeHtml(d.signerName || d.customer.contact_person || d.customer.name)}</div>
           <div style="font-size:10px;color:${MUTED}">${escapeHtml(company)}</div>
         </div>
       </div>
@@ -211,7 +213,7 @@ export async function generateServicePdf(d: ServiceFormData): Promise<jsPDF> {
 
 export function pdfFileName(d: ServiceFormData) {
   const safe = (d.customer.company_name || d.customer.name).replace(/[^\p{L}\p{N}]+/gu, "-").slice(0, 40);
-  return `${d.withPrices ? "servis-formu-fiyatli" : "servis-formu"}-${safe}-${d.orderNo}.pdf`;
+  return `${d.kind === "quote" ? "teklif" : d.withPrices ? "servis-formu-fiyatli" : "servis-formu"}-${safe}-${d.orderNo}.pdf`;
 }
 
 export function whatsappLink(phone: string, message: string) {
