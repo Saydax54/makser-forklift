@@ -6,7 +6,7 @@ import { Download, Mail, MessageCircle, Printer, Loader2 } from "lucide-react";
 import { generateServicePdf, pdfFileName, whatsappLink, type ServiceFormData } from "@/lib/service-pdf";
 import { whatsappMessage } from "@/lib/workshop";
 
-type Req = { data: ServiceFormData; title?: string } | null;
+type Req = { data: ServiceFormData; title?: string | undefined } | null;
 let current: Req = null;
 const subs = new Set<() => void>();
 function set(r: Req) {

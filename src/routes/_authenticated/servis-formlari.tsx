@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/workshop";
 import { formatTry, itemsTotal } from "@/lib/money";
@@ -191,7 +192,7 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
     void qc.invalidateQueries({ queryKey: ["order", row.id] });
   }
 
-  async function update(patch: Record<string, unknown>, msg: string) {
+  async function update(patch: Database["public"]["Tables"]["work_orders"]["Update"], msg: string) {
     setBusy(true);
     const { error } = await supabase.from("work_orders").update(patch).eq("id", row.id);
     setBusy(false);
@@ -240,7 +241,7 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
   }
 
   const customerName = row.customers?.company_name || row.customers?.name || "-";
-  const [badge, badgeClass] = QUOTE_BADGE[status] ?? QUOTE_BADGE.none;
+  const [badge, badgeClass] = QUOTE_BADGE[status] ?? QUOTE_BADGE["none"] ?? ["", ""];
 
   return (
     <div className="rounded-xl border bg-card p-4 shadow-panel">
