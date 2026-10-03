@@ -12,6 +12,7 @@ import {
   formatDate,
   statusBadgeClass,
 } from "@/lib/workshop";
+import { openPdfPreview } from "@/components/PdfPreview";
 import {
   generateServicePdf,
   pdfFileName,
@@ -241,8 +242,7 @@ function OrderDetail() {
   }
 
   async function downloadPdf(data: ServiceFormData = formData) {
-    const pdf = await generateServicePdf(data);
-    pdf.save(pdfFileName(data));
+    openPdfPreview(data);
   }
 
   const waMessage = whatsappMessage(formData.customer.company_name || formData.customer.name);
