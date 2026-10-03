@@ -44,7 +44,7 @@ const MUTED = "#64748b";
 const LINE = "#e2e8f0";
 
 function field(label: string, value: string) {
-  return `<div style="padding:7px 0;border-bottom:1px dashed ${LINE}">
+  return `<div style="padding:4px 0;border-bottom:1px dashed ${LINE}">
     <div style="font-size:9px;color:${MUTED};text-transform:uppercase;letter-spacing:.12em;font-weight:700">${escapeHtml(label)}</div>
     <div style="font-size:12.5px;color:${INK};margin-top:2px;font-weight:600">${escapeHtml(value || "-")}</div>
   </div>`;
@@ -59,7 +59,7 @@ function card(title: string, body: string, accent: string) {
 }
 
 function sectionTitle(t: string, accent: string) {
-  return `<div style="margin-top:20px;display:flex;align-items:center;gap:10px">
+  return `<div style="margin-top:12px;display:flex;align-items:center;gap:10px">
     <span style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${INK}">${escapeHtml(t)}</span>
     <span style="flex:1;height:1px;background:linear-gradient(90deg,${accent},transparent)"></span></div>`;
 }
@@ -67,7 +67,7 @@ function sectionTitle(t: string, accent: string) {
 type PdfItem = { title: string; qty: string; unit: string; price?: string };
 
 function itemsTable(items: PdfItem[], withPrices: boolean, accent: string) {
-  const cell = `padding:8px 10px;border-bottom:1px solid ${LINE};font-size:12px;color:${INK}`;
+  const cell = `padding:5px 10px;border-bottom:1px solid ${LINE};font-size:12px;color:${INK}`;
   const th = `padding:8px 10px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#fff;font-weight:700`;
   const rows = items.length
     ? items
@@ -118,7 +118,7 @@ function buildHtml(d: ServiceFormData) {
   const tax = [W.taxOffice && `V.D. ${W.taxOffice}`, W.taxNo && `V.N. ${W.taxNo}`].filter(Boolean).join(" · ");
   return `
   <div style="width:794px;background:#fff;font-family:Manrope,Arial,Helvetica,sans-serif;color:${INK};box-sizing:border-box">
-    <div style="background:${INK};color:#fff;padding:30px 44px 26px;position:relative;overflow:hidden">
+    <div style="background:${INK};color:#fff;padding:20px 40px 18px;position:relative;overflow:hidden">
       <div style="position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;border:28px solid ${accent};opacity:.18"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;position:relative">
         <div style="display:flex;align-items:center;gap:14px">
@@ -137,7 +137,7 @@ function buildHtml(d: ServiceFormData) {
     </div>
     <div style="height:5px;background:linear-gradient(90deg,${accent},${accent}55)"></div>
 
-    <div style="padding:26px 44px 30px">
+    <div style="padding:16px 40px 18px">
       <div style="display:flex;gap:14px">
         ${card("Müşteri", field("Firma Ünvanı", company) + field("Yetkili", d.customer.contact_person || d.customer.name) + field("Telefon", d.customer.phone) + field("Adres", d.customer.address), accent)}
         ${card("Makine", (d.machineCode ? field("Kimlik No", d.machineCode) : "") + field("Marka / Model", [d.customer.forklift_brand, d.customer.forklift_model].filter(Boolean).join(" ")) + field("Seri No", d.customer.serial_no) + (d.hourMeter ? field("Çalışma Saati", `${d.hourMeter} saat`) : ""), accent)}
@@ -156,14 +156,14 @@ function buildHtml(d: ServiceFormData) {
       ${sectionTitle("Teknisyen Görüşü", accent)}
       ${textBox(d.serviceNote, accent)}
 
-      <div style="margin-top:24px;display:flex;gap:16px;align-items:stretch">
+      <div style="margin-top:14px;display:flex;gap:16px;align-items:stretch">
         <div style="flex:1;border:1px solid ${LINE};border-radius:12px;padding:14px 16px;font-size:11px;color:${MUTED};line-height:1.6">
           <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${INK};margin-bottom:6px">Beyan</div>
           ${escapeHtml(W.declaration)}
         </div>
         <div style="width:260px;border:1px solid ${LINE};border-radius:12px;padding:12px;text-align:center">
           <div style="font-size:9px;color:${MUTED};letter-spacing:.12em;text-transform:uppercase;font-weight:700">Müşteri Onayı</div>
-          <div style="height:96px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-bottom:1px solid ${LINE}">
+          <div style="height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-bottom:1px solid ${LINE}">
             ${d.signatureData ? `<img src="${d.signatureData}" style="max-width:100%;max-height:100%" />` : ""}
           </div>
           <div style="font-size:12px;margin-top:6px;font-weight:800">${escapeHtml(d.signerName || d.customer.contact_person || d.customer.name)}</div>
