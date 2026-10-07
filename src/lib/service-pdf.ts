@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
 import { WORKSHOP, formatDate } from "./workshop";
-import { formatTry, itemTotal, itemsTotal, toNumber } from "./money";
+import { formatTry, itemTotal, itemsTotal, itemsTotalWithVat, toNumber, vatAmount } from "./money";
 
 export type ServiceFormData = {
   orderNo: string;
@@ -91,9 +91,11 @@ function itemsTable(items: PdfItem[], withPrices: boolean, accent: string) {
   const total =
     withPrices && items.length
       ? `<div style="display:flex;justify-content:flex-end;margin-top:10px">
-          <div style="background:${INK};color:#fff;border-radius:10px;padding:10px 16px;display:flex;gap:18px;align-items:center">
-            <span style="font-size:10px;letter-spacing:.16em;font-weight:700;opacity:.7">GENEL TOPLAM</span>
-            <span style="font-size:17px;font-weight:800;color:${accent}">${escapeHtml(formatTry(itemsTotal(items)))}</span>
+          <div style="width:300px;background:${INK};color:#fff;border-radius:10px;padding:9px 14px">
+            <div style="display:flex;justify-content:space-between;gap:16px;font-size:10px;font-weight:700;opacity:.75"><span>ARA TOPLAM</span><span>${escapeHtml(formatTry(itemsTotal(items)))}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:16px;margin-top:5px;font-size:10px;font-weight:700;opacity:.75"><span>KDV %20</span><span>${escapeHtml(formatTry(vatAmount(items)))}</span></div>
+            <div style="height:1px;background:#ffffff33;margin:7px 0"></div>
+            <div style="display:flex;justify-content:space-between;gap:16px;align-items:center"><span style="font-size:10px;letter-spacing:.12em;font-weight:800">KDV DAHİL TOPLAM</span><span style="font-size:17px;font-weight:800;color:${accent}">${escapeHtml(formatTry(itemsTotalWithVat(items)))}</span></div>
           </div></div>`
       : "";
   return `<table style="width:100%;border-collapse:separate;border-spacing:0;margin-top:8px;border:1px solid ${LINE};border-radius:12px;overflow:hidden">
@@ -119,6 +121,12 @@ function buildHtml(d: ServiceFormData) {
   const company = d.customer.company_name || d.customer.name;
   const contacts = [W.phone, W.email, W.website].filter(Boolean).map(escapeHtml).join(" &nbsp;·&nbsp; ");
   const tax = [W.taxOffice && `V.D. ${W.taxOffice}`, W.taxNo && `V.N. ${W.taxNo}`].filter(Boolean).join(" · ");
+  const quoteTerms = [
+    "Müşteri, bu teklifin kabul edildiğini yazılı bir şekilde belirttikten sonra işlemler başlatılacaktır.",
+    "Ödeme, hizmet ve malların tesliminden sonra havale ile yapılacaktır.",
+    "Birim fiyatlarımızda %20 KDV hariçtir.",
+    "Fiyatlarımız fatura tarihinde TCMB Efektif satış kuru alınarak TL'ye çevirilip fatura kesilecektir.",
+  ];
   return `
   <div style="width:794px;background:#fff;font-family:Manrope,Arial,Helvetica,sans-serif;color:${INK};box-sizing:border-box">
     <div style="background:${INK};color:#fff;padding:20px 40px 18px;position:relative;overflow:hidden">
@@ -161,7 +169,7 @@ function buildHtml(d: ServiceFormData) {
       <div style="margin-top:14px;display:flex;gap:16px;align-items:stretch">
         <div style="flex:1;border:1px solid ${LINE};border-radius:12px;padding:14px 16px;font-size:11px;color:${MUTED};line-height:1.6">
           <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${INK};margin-bottom:6px">${isQuote ? "Teklif Koşulları" : "Beyan"}</div>
-          ${escapeHtml(isQuote ? "Bu teklif, servis formunda kayıt altına alınan işlemler esas alınarak hazırlanmıştır. Onayınızın ardından faturalandırma yapılacaktır." : W.declaration)}
+          ${isQuote ? `<ol style="margin:0;padding-left:18px">${quoteTerms.map((term) => `<li style="margin-bottom:3px">${escapeHtml(term)}</li>`).join("")}</ol>` : escapeHtml(W.declaration)}
         </div>
         <div style="width:260px;border:1px solid ${LINE};border-radius:12px;padding:12px;text-align:center">
           <div style="font-size:9px;color:${MUTED};letter-spacing:.12em;text-transform:uppercase;font-weight:700">${isQuote ? "Teklifi Onaylayan" : "Müşteri Onayı"}</div>
