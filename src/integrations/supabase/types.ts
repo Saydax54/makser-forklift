@@ -306,6 +306,7 @@ export type Database = {
           invoiced_at: string | null
           paid_at: string | null
           payment_status: string
+          quote_approval_files: Json
           quote_approved_at: string | null
           quote_approved_by: string
           quote_created_at: string | null
@@ -341,6 +342,7 @@ export type Database = {
           invoiced_at?: string | null
           paid_at?: string | null
           payment_status?: string
+          quote_approval_files?: Json
           quote_approved_at?: string | null
           quote_approved_by?: string
           quote_created_at?: string | null
@@ -376,6 +378,7 @@ export type Database = {
           invoiced_at?: string | null
           paid_at?: string | null
           payment_status?: string
+          quote_approval_files?: Json
           quote_approved_at?: string | null
           quote_approved_by?: string
           quote_created_at?: string | null
