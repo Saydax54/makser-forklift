@@ -83,13 +83,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MAKSER FORKLİFT — İş Emri ve Saha Takip" },
+      { title: "FSH İŞ İSTİF" },
       {
         name: "description",
         content: "Forklift servis atölyesi için iş emri, saha takibi ve dijital servis formu.",
       },
-      { name: "author", content: "MAKSER FORKLİFT" },
-      { property: "og:title", content: "MAKSER FORKLİFT — İş Emri ve Saha Takip" },
+      { name: "author", content: "FSH İŞ İSTİF MAKİNALARI" },
+      { property: "og:title", content: "FSH İŞ İSTİF MAKİNALARI — İş Emri ve Saha Takip" },
       {
         property: "og:description",
         content: "İş emri, saha takibi, dijital imza ve otomatik servis formu PDF'i.",

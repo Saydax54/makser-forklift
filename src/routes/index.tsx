@@ -8,13 +8,15 @@ import { ClipboardList, PenLine, FileText } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "MAKSER FORKLİFT — İş Emri ve Saha Takip Sistemi" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       {
         name: "description",
         content:
           "Forklift servis atölyesi için iş emri oluşturma, saha teknisyeni takibi, dijital imzalı servis formu ve otomatik PDF gönderimi.",
       },
-      { property: "og:title", content: "MAKSER FORKLİFT — İş Emri ve Saha Takip Sistemi" },
+      { property: "og:title", content: "FSH İŞ İSTİF MAKİNALARI — İş Emri ve Saha Takip Sistemi" },
       {
         property: "og:description",
         content: "İş emri, saha takibi, dijital imza ve otomatik servis formu PDF'i tek yerde.",

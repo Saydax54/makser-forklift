@@ -11,13 +11,15 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/giris")({
   head: () => ({
     meta: [
-      { title: "Giriş — MAKSER FORKLİFT Servis Takip" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       {
         name: "description",
         content:
-          "MAKSER FORKLİFT iş emri ve saha takip sistemine yönetici veya teknisyen hesabınızla giriş yapın.",
+          "FSH İŞ İSTİF MAKİNALARI iş emri ve saha takip sistemine yönetici veya teknisyen hesabınızla giriş yapın.",
       },
-      { property: "og:title", content: "Giriş — MAKSER FORKLİFT Servis Takip" },
+      { property: "og:title", content: "Giriş — FSH İŞ İSTİF MAKİNALARI Servis Takip" },
       {
         property: "og:description",
         content: "Forklift servis iş emirlerini takip etmek için giriş yapın.",

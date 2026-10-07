@@ -24,12 +24,14 @@ import { FileText, Receipt, AlertTriangle, CircleCheck } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/onayli-isler")({
   head: () => ({
     meta: [
-      { title: "Onaylı İşler — MAKSER FORKLİFT" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       {
         name: "description",
         content: "Müşteri onayı alınmış servis işleri, faturalandırma takibi ve geçmiş kayıtlar.",
       },
-      { property: "og:title", content: "Onaylı İşler — MAKSER FORKLİFT" },
+      { property: "og:title", content: "Onaylı İşler — FSH İŞ İSTİF MAKİNALARI" },
       {
         property: "og:description",
         content: "Onaylı işleri faturalandırın ve geçmiş kayıtları inceleyin.",

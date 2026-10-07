@@ -24,9 +24,11 @@ import { UserPlus, Trash2, Save } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/ayarlar")({
   head: () => ({
     meta: [
-      { title: "Ayarlar — MAKSER FORKLİFT" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       { name: "description", content: "Yönetici ve teknisyen hesaplarını oluşturun, düzenleyin veya silin." },
-      { property: "og:title", content: "Ayarlar — MAKSER FORKLİFT" },
+      { property: "og:title", content: "Ayarlar — FSH İŞ İSTİF MAKİNALARI" },
       { property: "og:description", content: "Kullanıcı hesabı yönetimi ve atölye ayarları." },
     ],
   }),

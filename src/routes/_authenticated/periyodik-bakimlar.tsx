@@ -12,12 +12,14 @@ import { Wrench } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/periyodik-bakimlar")({
   head: () => ({
     meta: [
-      { title: "Periyodik Bakımlar — MAKSER FORKLİFT" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       {
         name: "description",
         content: "250 saat veya 3 ay kuralına göre bakımı yaklaşan forkliftlerin listesi.",
       },
-      { property: "og:title", content: "Periyodik Bakımlar — MAKSER FORKLİFT" },
+      { property: "og:title", content: "Periyodik Bakımlar — FSH İŞ İSTİF MAKİNALARI" },
       {
         property: "og:description",
         content: "Bakım zamanı gelen makineleri görün ve tek dokunuşla iş emri açın.",

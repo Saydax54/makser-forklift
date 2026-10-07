@@ -21,9 +21,11 @@ import { ServicePhotos } from "@/components/ServicePhotos";
 export const Route = createFileRoute("/_authenticated/musteriler")({
   head: () => ({
     meta: [
-      { title: "Müşteriler — MAKSER FORKLİFT" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       { name: "description", content: "Kayıtlı müşteriler, makine kimlikleri ve bakım durumu." },
-      { property: "og:title", content: "Müşteriler — MAKSER FORKLİFT" },
+      { property: "og:title", content: "Müşteriler — FSH İŞ İSTİF MAKİNALARI" },
       { property: "og:description", content: "Müşteri ve makine kayıtlarını yönetin." },
     ],
   }),
