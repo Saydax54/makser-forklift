@@ -22,7 +22,7 @@ export type WorkshopSettings = {
 };
 
 export const DEFAULT_WORKSHOP: WorkshopSettings = {
-  name: "MAKSER FORKLİFT",
+  name: "FSH İŞ İSTİF MAKİNALARI",
   tagline: "Forklift Teknik Servis & Saha Bakım",
   phone: "0530 626 99 53",
   phoneIntl: "905306269953",

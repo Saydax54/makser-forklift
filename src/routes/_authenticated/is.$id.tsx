@@ -54,9 +54,11 @@ import {
 export const Route = createFileRoute("/_authenticated/is/$id")({
   head: () => ({
     meta: [
-      { title: "İş Emri Detayı — MAKSER FORKLİFT" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       { name: "description", content: "İş emri detayı, servis formu ve dijital imza." },
-      { property: "og:title", content: "İş Emri Detayı — MAKSER FORKLİFT" },
+      { property: "og:title", content: "İş Emri Detayı — FSH İŞ İSTİF MAKİNALARI" },
       { property: "og:description", content: "Servis notunu yazın, imzayı alın, formu gönderin." },
     ],
   }),

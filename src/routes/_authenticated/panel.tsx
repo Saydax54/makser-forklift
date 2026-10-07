@@ -22,9 +22,11 @@ import { Plus } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
     meta: [
-      { title: "İş Emirleri — MAKSER FORKLİFT" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       { name: "description", content: "Açık, devam eden ve tamamlanan forklift servis iş emirleri." },
-      { property: "og:title", content: "İş Emirleri — MAKSER FORKLİFT" },
+      { property: "og:title", content: "İş Emirleri — FSH İŞ İSTİF MAKİNALARI" },
       { property: "og:description", content: "Saha servis iş emirlerini tek ekrandan takip edin." },
     ],
   }),

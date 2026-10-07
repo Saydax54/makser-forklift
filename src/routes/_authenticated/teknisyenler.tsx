@@ -18,9 +18,11 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/teknisyenler")({
   head: () => ({
     meta: [
-      { title: "Teknisyenler — MAKSER FORKLİFT" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       { name: "description", content: "Saha teknisyenleri ve müsaitlik durumları." },
-      { property: "og:title", content: "Teknisyenler — MAKSER FORKLİFT" },
+      { property: "og:title", content: "Teknisyenler — FSH İŞ İSTİF MAKİNALARI" },
       { property: "og:description", content: "Teknisyen listesi ve görev durumları." },
     ],
   }),

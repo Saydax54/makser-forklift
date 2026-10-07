@@ -30,12 +30,14 @@ import { Download, Pencil, Check, FileText, Undo2 } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/servis-formlari")({
   head: () => ({
     meta: [
-      { title: "Servis Formları — MAKSER FORKLİFT" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       {
         name: "description",
         content: "Tamamlanan işlerin servis formları, fiyatlandırma ve PDF çıktıları.",
       },
-      { property: "og:title", content: "Servis Formları — MAKSER FORKLİFT" },
+      { property: "og:title", content: "Servis Formları — FSH İŞ İSTİF MAKİNALARI" },
       {
         property: "og:description",
         content: "Servis formlarını düzenleyin, fiyatlandırın ve PDF olarak paylaşın.",

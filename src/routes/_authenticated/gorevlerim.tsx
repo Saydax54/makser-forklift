@@ -7,9 +7,11 @@ import { STATUS_LABEL, formatDate, statusBadgeClass } from "@/lib/workshop";
 export const Route = createFileRoute("/_authenticated/gorevlerim")({
   head: () => ({
     meta: [
-      { title: "Görevlerim — MAKSER FORKLİFT" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "FSH İŞ İSTİF" },
       { name: "description", content: "Saha teknisyenine atanan forklift servis işleri." },
-      { property: "og:title", content: "Görevlerim — MAKSER FORKLİFT" },
+      { property: "og:title", content: "Görevlerim — FSH İŞ İSTİF MAKİNALARI" },
       { property: "og:description", content: "Size atanan servis işlerini görüntüleyin." },
     ],
   }),
