@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/lib/workshop";
-import { formatTry, itemsTotal } from "@/lib/money";
+import { formatTry, itemsTotalWithVat } from "@/lib/money";
 import { parseServiceItems } from "@/components/ServiceItemsEditor";
 import { type ServiceFormData } from "@/lib/service-pdf";
 import { openPdfPreview } from "@/components/PdfPreview";
@@ -130,10 +130,10 @@ function ApprovedJobsPage() {
             .includes(q),
     );
 
-  const totalAll = all.reduce((s, r) => s + itemsTotal(parseServiceItems(r.quote_items)), 0);
+  const totalAll = all.reduce((s, r) => s + itemsTotalWithVat(parseServiceItems(r.quote_items)), 0);
   const totalInvoiced = all
     .filter((r) => r.invoice_status === "invoiced")
-    .reduce((s, r) => s + itemsTotal(parseServiceItems(r.quote_items)), 0);
+    .reduce((s, r) => s + itemsTotalWithVat(parseServiceItems(r.quote_items)), 0);
 
   const overdue = all.filter(isOverdue);
 
@@ -159,7 +159,7 @@ function ApprovedJobsPage() {
           className="flex w-full items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-left text-sm font-semibold text-destructive"
         >
           <AlertTriangle className="size-4 shrink-0" />
-          {overdue.length} faturanın vadesi geçti · {formatTry(overdue.reduce((s, r) => s + itemsTotal(parseServiceItems(r.quote_items)), 0))} tahsil edilmedi
+          {overdue.length} faturanın vadesi geçti · {formatTry(overdue.reduce((s, r) => s + itemsTotalWithVat(parseServiceItems(r.quote_items)), 0))} tahsil edilmedi
         </button>
       )}
 
@@ -241,7 +241,7 @@ function ApprovedCard({ row }: { row: ApprovedRow }) {
   const paid = row.payment_status === "paid";
   const overdue = isOverdue(row);
   const daysLeft = row.due_date ? daysBetween(todayStr(), row.due_date) : null;
-  const total = itemsTotal(items);
+  const total = itemsTotalWithVat(items);
   const invoiced = row.invoice_status === "invoiced";
 
   function previewPdf() {

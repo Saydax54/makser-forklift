@@ -26,6 +26,16 @@ export function itemsTotal(items: ServiceItem[]) {
   return items.reduce((sum, i) => sum + itemTotal(i), 0);
 }
 
+export const VAT_RATE = 0.2;
+
+export function vatAmount(items: ServiceItem[]) {
+  return itemsTotal(items) * VAT_RATE;
+}
+
+export function itemsTotalWithVat(items: ServiceItem[]) {
+  return itemsTotal(items) + vatAmount(items);
+}
+
 export function hasPrices(items: ServiceItem[]) {
   return items.some((i) => toNumber(i.price) > 0);
 }

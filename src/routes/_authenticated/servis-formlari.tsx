@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/workshop";
-import { formatTry, itemsTotal } from "@/lib/money";
+import { formatTry, itemsTotal, itemsTotalWithVat, vatAmount } from "@/lib/money";
 import { type ServiceFormData } from "@/lib/service-pdf";
 import { openPdfPreview } from "@/components/PdfPreview";
 import {
@@ -332,8 +332,10 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
                       Kalemler servis formundan aktarıldı. Fiyatları girin; teklif imzasız ayrı bir belge olarak oluşturulur, servis formu değişmez.
                     </p>
                     <ServiceItemsEditor items={quoteItems} onChange={setQuoteItems} withPrice />
-                    <div className="flex justify-between rounded-lg bg-muted px-3 py-2 font-display text-sm font-extrabold">
-                      <span>Genel Toplam</span><span>{formatTry(itemsTotal(quoteItems))}</span>
+                    <div className="space-y-1 rounded-lg bg-muted px-3 py-2 text-sm">
+                      <div className="flex justify-between text-muted-foreground"><span>Ara Toplam</span><span>{formatTry(itemsTotal(quoteItems))}</span></div>
+                      <div className="flex justify-between text-muted-foreground"><span>KDV %20</span><span>{formatTry(vatAmount(quoteItems))}</span></div>
+                      <div className="flex justify-between border-t pt-1 font-display font-extrabold"><span>KDV Dahil Toplam</span><span>{formatTry(itemsTotalWithVat(quoteItems))}</span></div>
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor={`q-${row.id}-note`}>Teklif Notu (opsiyonel)</Label>
