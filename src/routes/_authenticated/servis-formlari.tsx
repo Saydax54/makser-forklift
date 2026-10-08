@@ -390,7 +390,14 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
                         <Label htmlFor={`a-${row.id}`}>Onaylayan Kişi</Label>
                         <Input id={`a-${row.id}`} required maxLength={80} value={approver} onChange={(e) => setApprover(e.target.value)} />
                       </div>
-                      <Button type="submit" className="w-full" disabled={busy}>Onayı Kaydet</Button>
+                      <div className="space-y-1.5">
+                        <Label>Onaylı Teklif Görseli (opsiyonel)</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Kaşeli/imzalı teklifin fotoğrafını çekin veya görsel / PDF olarak yükleyin. Belgeler bu teklifin içinde saklanır.
+                        </p>
+                        <ApprovalFilePicker files={approvalFiles} onChange={setApprovalFiles} />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={busy}>{busy ? "Kaydediliyor…" : "Onayı Kaydet"}</Button>
                     </form>
                   </DialogContent>
                 </Dialog>
@@ -409,6 +416,14 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
           )}
         </div>
       </div>
+      {isAdmin && status === "approved" && (
+        <QuoteApprovalGallery
+          workOrderId={row.id}
+          files={savedApprovalFiles}
+          editable
+          onChanged={refresh}
+        />
+      )}
     </div>
   );
 }
