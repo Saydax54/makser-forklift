@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
