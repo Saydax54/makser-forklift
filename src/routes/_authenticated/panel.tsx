@@ -146,6 +146,20 @@ function Panel() {
     },
   });
 
+  async function deleteOrder(o: Order) {
+    const who = o.customers?.company_name || o.customers?.name || "bu iş";
+    if (!window.confirm(`${who} için açılan iş emri kalıcı olarak silinsin mi?`)) return;
+    try {
+      await supabase.from("forklift_photos").update({ work_order_id: null }).eq("work_order_id", o.id);
+      const { error } = await supabase.from("work_orders").delete().eq("id", o.id);
+      if (error) throw error;
+      toast.success("İş emri silindi");
+      void qc.invalidateQueries({ queryKey: ["orders"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "İş emri silinemedi");
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
