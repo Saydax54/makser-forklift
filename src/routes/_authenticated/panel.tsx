@@ -208,10 +208,27 @@ function Panel() {
                       <span className="font-semibold">
                         {o.customers?.company_name || o.customers?.name || "-"}
                       </span>
-                      <span
-                        className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusBadgeClass(o.status)}`}
-                      >
-                        {STATUS_LABEL[o.status as keyof typeof STATUS_LABEL] ?? o.status}
+                      <span className="flex shrink-0 items-center gap-1">
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusBadgeClass(o.status)}`}
+                        >
+                          {STATUS_LABEL[o.status as keyof typeof STATUS_LABEL] ?? o.status}
+                        </span>
+                        {role === "admin" && (
+                          <button
+                            type="button"
+                            aria-label="İş emrini sil"
+                            title="İş emrini sil"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              void deleteOrder(o);
+                            }}
+                            className="rounded-md border border-destructive/40 p-1 text-destructive transition-colors hover:bg-destructive/10"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
                       </span>
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
