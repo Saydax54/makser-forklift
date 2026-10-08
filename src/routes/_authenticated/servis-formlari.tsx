@@ -26,6 +26,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Download, Pencil, Check, FileText, Undo2 } from "lucide-react";
+import {
+  ApprovalFilePicker,
+  QuoteApprovalGallery,
+  parseApprovalFiles,
+  uploadApprovalFiles,
+  type ApprovalFile,
+} from "@/components/QuoteApprovalFiles";
 
 export const Route = createFileRoute("/_authenticated/servis-formlari")({
   head: () => ({
@@ -64,6 +71,7 @@ type FormRow = {
   quote_note: string;
   quote_approved_by: string;
   quote_approved_at: string | null;
+  quote_approval_files: unknown;
   customers: ServiceFormData["customer"] | null;
   forklifts: { code: string; brand: string; model: string; serial_no: string } | null;
   technicians: { full_name: string } | null;
@@ -80,7 +88,7 @@ function ServiceFormsPage() {
       const { data, error } = await supabase
         .from("work_orders")
         .select(
-          "id, fault_description, service_note, service_items, signature_data, signature_name, created_at, completed_at, hour_meter, form_approved, form_approved_at, quote_items, quote_status, quote_note, quote_approved_by, quote_approved_at, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(code, brand, model, serial_no), technicians:technicians!work_orders_technician_id_fkey(full_name)",
+          "id, fault_description, service_note, service_items, signature_data, signature_name, created_at, completed_at, hour_meter, form_approved, form_approved_at, quote_items, quote_status, quote_note, quote_approved_by, quote_approved_at, quote_approval_files, customers(name, company_name, contact_person, phone, email, address, forklift_brand, forklift_model, serial_no), forklifts(code, brand, model, serial_no), technicians:technicians!work_orders_technician_id_fkey(full_name)",
         )
         .eq("status", "completed")
         .order("completed_at", { ascending: false });
@@ -184,6 +192,8 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
   );
   const [quoteNote, setQuoteNote] = useState(row.quote_note ?? "");
   const [approver, setApprover] = useState(row.quote_approved_by || row.customers?.contact_person || "");
+  const [approvalFiles, setApprovalFiles] = useState<File[]>([]);
+  const savedApprovalFiles = parseApprovalFiles(row.quote_approval_files);
 
   const status = row.quote_status || "none";
   const total = itemsTotal(savedQuote);
@@ -233,13 +243,33 @@ function FormCard({ row, isAdmin }: { row: FormRow; isAdmin: boolean }) {
   async function approve(e: React.FormEvent) {
     e.preventDefault();
     const now = new Date().toISOString();
+    let uploaded: ApprovalFile[] = [];
+    if (approvalFiles.length) {
+      setBusy(true);
+      try {
+        uploaded = await uploadApprovalFiles(row.id, approvalFiles);
+      } catch (err) {
+        setBusy(false);
+        toast.error(err instanceof Error ? err.message : "Onay belgesi yüklenemedi");
+        return;
+      }
+    }
     if (
       await update(
-        { quote_status: "approved", quote_approved_by: approver.trim(), quote_approved_at: now, form_approved: true, form_approved_at: now },
+        {
+          quote_status: "approved",
+          quote_approved_by: approver.trim(),
+          quote_approved_at: now,
+          form_approved: true,
+          form_approved_at: now,
+          quote_approval_files: [...savedApprovalFiles, ...uploaded],
+        },
         "Teklif onaylandı, iş Onaylı İşler sayfasına geçti",
       )
-    )
+    ) {
+      setApprovalFiles([]);
       setApproveOpen(false);
+    }
   }
 
   const customerName = row.customers?.company_name || row.customers?.name || "-";
