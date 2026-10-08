@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FileText, Receipt, AlertTriangle, CircleCheck } from "lucide-react";
+import { QuoteApprovalGallery, parseApprovalFiles } from "@/components/QuoteApprovalFiles";
 
 export const Route = createFileRoute("/_authenticated/onayli-isler")({
   head: () => ({
@@ -59,6 +60,7 @@ type ApprovedRow = {
   quote_items: unknown;
   quote_note: string;
   quote_approved_by: string;
+  quote_approval_files: unknown;
   due_date: string | null;
   payment_status: string;
   paid_at: string | null;
@@ -470,6 +472,7 @@ function ApprovedCard({ row }: { row: ApprovedRow }) {
           </Dialog>
         </div>
       </div>
+      <QuoteApprovalGallery workOrderId={row.id} files={parseApprovalFiles(row.quote_approval_files)} />
     </li>
   );
 }
